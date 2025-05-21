@@ -13,30 +13,74 @@ class PathAndRename:
 
 path_and_rename = PathAndRename()
 
+class City(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+
+    def __str__(self):
+        return self.name
+
+
+class Category(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+
+    def __str__(self):
+        return self.name
+
+class User(models.Model):
+    userName = models.CharField(max_length=150, unique=True)
+    email = models.EmailField(unique=True)
+    password = models.CharField(max_length=255)
+    city = models.ForeignKey(City, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.userName
+
 class Product(models.Model):
+    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    seller = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
-    image = models.ImageField(upload_to=path_and_rename, blank=True, default='static/img/default_product.jpg')
-    price = models.DecimalField(decimal_places=2, max_digits=10)
-    in_stock = models.BooleanField(default=True)
+    stock = models.PositiveIntegerField(default=0)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.name
 
-    def save(self, *args, **kwargs):
-        first_save = self.pk is None
-        super().save(*args, **kwargs)
 
-        # Перемещаем файл после первого сохранения
-        if first_save and self.image:
-            filename = os.path.basename(self.image.name)
-            new_path = f'product_images/{self.pk}/{filename}'
+class CartItem(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(default=1)
+    added_at = models.DateTimeField(auto_now_add=True)
 
-            # Чтение и запись файла в новое место
-            file = self.image
-            new_file = default_storage.save(new_path, file)
+    class Meta:
+        unique_together = ('user', 'product')
 
-            # Обновление поля
-            self.image.name = new_path
-            super().save(update_fields=['image'])
+    def __str__(self):
+        return f"{self.user} - {self.product} ({self.quantity})"
+
+class Delivery(models.Model):
+    STATUS_CHOICES = [
+        ('new', 'New'),
+        ('processing', 'Processing'),
+        ('shipped', 'Shipped'),
+        ('delivered', 'Delivered'),
+        ('cancelled', 'Cancelled'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='new')
+
+    def __str__(self):
+        return f"Delivery of {self.product} to {self.user} - {self.status}"
+
+
+class ProductImage(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    image_url = models.URLField()
+
+    def __str__(self):
+        return f"Image of {self.product.name}"
