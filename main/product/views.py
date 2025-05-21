@@ -6,8 +6,9 @@ from rest_framework import status
 from rest_framework.generics import ListAPIView
 from rest_framework.filters import SearchFilter, OrderingFilter
 
-from .models import Product
-from .serializers import ProductSerializer
+from .models import Product, City
+from .serializers import ProductSerializer, CitySerializer
+
 
 # Create your views here.
 
@@ -91,3 +92,77 @@ class ProductSearch(ListAPIView):
     search_fields = ['name', 'description']
     ordering_fields = ['price', 'created_at']
     permission_classes = [AllowAny]
+
+
+# --------------------------------------------City-------------------------------------
+@api_view(["GET"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def get_all_cities(request):
+    cities = City.objects.filter()
+    serializer = CitySerializer(cities, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def get_city_by_id(request, pk):
+    city = City.objects.filter(id=pk).first()
+    if not city:
+        return Response({"detail": "City not found"}, status=status.HTTP_404_NOT_FOUND)
+    serializer = CitySerializer(city)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def create_city(request):
+    serializer = CitySerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(["PUT"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def update_city_put(request, pk):
+    city = City.objects.filter(id=pk).first()
+    if not city:
+        return Response({"detail": "City not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = CitySerializer(city, data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["PATCH"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def update_city_patch(request, pk):
+    city = City.objects.filter(id=pk).first()
+    if not city:
+        return Response({"detail": "City not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = CitySerializer(city, data=request.data, partial=True)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["DELETE"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def delete_city(request, pk):
+    city = City.objects.filter(id=pk).first()
+    if not city:
+        return Response({"detail": "City not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    city.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
