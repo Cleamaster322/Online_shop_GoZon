@@ -1,3 +1,4 @@
+from django.middleware.csrf import get_token
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.decorators import (api_view, authentication_classes, permission_classes)
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
@@ -5,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.generics import ListAPIView
 from rest_framework.filters import SearchFilter, OrderingFilter
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from .models import *
 from .serializers import *
@@ -22,7 +24,7 @@ def all_products(request):
 
 # ----------- Защита от вредоносных атак
 @api_view(['POST'])
-@authentication_classes([TokenAuthentication])
+@authentication_classes([JWTAuthentication])
 @permission_classes([IsAuthenticated])
 def add_product(request):
     if 'image' in request.FILES:
@@ -55,7 +57,7 @@ def get_product_by_id(request, pk):
     return Response(serializer.data)
 
 @api_view(["PUT"])
-@authentication_classes([TokenAuthentication])
+@authentication_classes([JWTAuthentication])
 @permission_classes([IsAuthenticated])
 def update_product(request, pk):
     product = get_object(pk)
@@ -169,7 +171,7 @@ def delete_city(request, pk):
 
 # --------------------------------------------User-------------------------------------
 @api_view(["GET"])
-@authentication_classes([TokenAuthentication])
+@authentication_classes([JWTAuthentication])
 @permission_classes([IsAuthenticated])
 def get_all_users(request):
     users = User.objects.all()
@@ -178,8 +180,8 @@ def get_all_users(request):
 
 
 @api_view(["GET"])
-@authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
+# @authentication_classes([TokenAuthentication])
+# @permission_classes([IsAuthenticated])
 def get_user_by_id(request, pk):
     user = User.objects.filter(id=pk).first()
     if not user:
@@ -258,9 +260,23 @@ def login_user(request):
     else:
         return Response({'detail': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
-@api_view(['POST'])
-@authentication_classes([])  # Можно оставить дефолт (SessionAuthentication)
+@api_view(['GET'])
+@authentication_classes([])
+@permission_classes([AllowAny])
+def get_csrf_token(request):
+    token = get_token(request)
+    return Response({'csrf_token': token})
+
+@api_view(["GET"])
+# @authentication_classes([TokenAuthentication])
+# @permission_classes([IsAuthenticated])
+def get_current_user(request):
+    serializer = UserSerializer(request.user)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+@authentication_classes([JWTAuthentication])
 @permission_classes([IsAuthenticated])
-def logout_user(request):
-    logout(request)
-    return Response({'detail': 'Logged out successfully'}, status=status.HTTP_200_OK)
+def test2(request):
+    print(request.user)
+    return Response({'test': 123321})

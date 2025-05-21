@@ -3,18 +3,6 @@ import os
 from django.contrib.auth.base_user import BaseUserManager, AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin
 from django.db import models
-from django.core.files.storage import default_storage
-from django.utils.deconstruct import deconstructible
-
-#Что бы сохранять и восстанавливать объекты класса при миграциях
-@deconstructible
-class PathAndRename:
-    def __call__(self, instance, filename):
-        if instance.pk:
-            return f'product_images/{instance.pk}/{filename}'
-        return f'product_images/temp/{filename}'  # Временный путь до получения ID
-
-path_and_rename = PathAndRename()
 
 class City(models.Model):
     name = models.CharField(max_length=255, unique=True)

@@ -17,7 +17,7 @@ urlpatterns = [
     path('create_city/', create_city),
     path('register/', register_user),
 
-    path('register/', register_user),
-    path('login/', login_user),
-    path('logout/', logout_user),
+    path('get_csrf_token/', get_csrf_token),
+    path("user/me/", get_current_user),
+    path('test2/', test2),
 ]
