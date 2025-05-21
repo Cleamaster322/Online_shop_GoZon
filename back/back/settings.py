@@ -105,7 +105,7 @@ SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_HTTPONLY = False
 SESSION_COOKIE_HTTPONLY = False
 
-ROOT_URLCONF = 'main.urls'
+ROOT_URLCONF = 'back.urls'
 
 TEMPLATES = [
     {
@@ -122,7 +122,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'main.wsgi.application'
+WSGI_APPLICATION = 'back.wsgi.application'
 
 
 # Database
