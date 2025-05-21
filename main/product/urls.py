@@ -11,6 +11,13 @@ urlpatterns = [
     path('product/search/', ProductSearch.as_view()),
 
     path('city', get_all_cities),
+    path('user', get_all_users),
     path('city/<int:pk>/', get_city_by_id),
+    path('user/<int:pk>/', get_user_by_id),
     path('create_city/', create_city),
+    path('register/', register_user),
+
+    path('register/', register_user),
+    path('login/', login_user),
+    path('logout/', logout_user),
 ]

@@ -16,7 +16,7 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-    list_display = ('id', 'userName', 'email', 'city', 'created_at')
+    list_display = ('id', 'username', 'email', 'city', 'created_at')
     search_fields = ('userName', 'email')
     list_filter = ('city',)
 

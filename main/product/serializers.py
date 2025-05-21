@@ -1,3 +1,4 @@
+from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
 from .models import *
 import bleach
@@ -18,6 +19,7 @@ class ProductSerializer(serializers.ModelSerializer):
         clean_value = bleach.clean(value, tags=[], strip=True)
         return clean_value
 
+# -----------------------City-----------------------
 class CitySerializer(serializers.ModelSerializer):
     class Meta:
         model = City
@@ -33,3 +35,20 @@ class CitySerializer(serializers.ModelSerializer):
         value = value[0].upper() + value[1:].lower()
         print(value,"**********************")
         return value
+# -----------------------User-----------------------
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'password', 'city', 'created_at']
+        extra_kwargs = {
+            'password': {'write_only': True}  # чтобы пароль не возвращался в ответе
+        }
+
+    def create(self, validated_data):
+        validated_data['password'] = make_password(validated_data['password'])
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        if 'password' in validated_data:
+            validated_data['password'] = make_password(validated_data['password'])
+        return super().update(instance, validated_data)

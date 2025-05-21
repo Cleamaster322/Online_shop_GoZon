@@ -6,8 +6,8 @@ from rest_framework import status
 from rest_framework.generics import ListAPIView
 from rest_framework.filters import SearchFilter, OrderingFilter
 
-from .models import Product, City
-from .serializers import ProductSerializer, CitySerializer
+from .models import *
+from .serializers import *
 
 
 # Create your views here.
@@ -166,3 +166,101 @@ def delete_city(request, pk):
 
     city.delete()
     return Response(status=status.HTTP_204_NO_CONTENT)
+
+# --------------------------------------------User-------------------------------------
+@api_view(["GET"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def get_all_users(request):
+    users = User.objects.all()
+    serializer = UserSerializer(users, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def get_user_by_id(request, pk):
+    user = User.objects.filter(id=pk).first()
+    if not user:
+        return Response({"detail": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+    serializer = UserSerializer(user)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(["PUT"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def update_user_put(request, pk):
+    user = User.objects.filter(id=pk).first()
+    if not user:
+        return Response({"detail": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = UserSerializer(user, data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["PATCH"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def update_user_patch(request, pk):
+    user = User.objects.filter(id=pk).first()
+    if not user:
+        return Response({"detail": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = UserSerializer(user, data=request.data, partial=True)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["DELETE"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def delete_user(request, pk):
+    user = User.objects.filter(id=pk).first()
+    if not user:
+        return Response({"detail": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    user.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def register_user(request):
+    serializer = UserSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+from django.contrib.auth import authenticate, login, logout
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def login_user(request):
+    username = request.data.get('userName')
+    password = request.data.get('password')
+
+    if username is None or password is None:
+        return Response({'detail': 'Please provide username and password'}, status=status.HTTP_400_BAD_REQUEST)
+
+    user = authenticate(request, username=username, password=password)
+    if user is not None:
+        login(request, user)  # Создаст сессию и установит куки
+        return Response({'detail': 'Logged in successfully'}, status=status.HTTP_200_OK)
+    else:
+        return Response({'detail': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+
+@api_view(['POST'])
+@authentication_classes([])  # Можно оставить дефолт (SessionAuthentication)
+@permission_classes([IsAuthenticated])
+def logout_user(request):
+    logout(request)
+    return Response({'detail': 'Logged out successfully'}, status=status.HTTP_200_OK)
