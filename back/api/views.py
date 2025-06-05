@@ -17,6 +17,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import City
 from .serializers import CitySerializer
+from django.conf import settings
 
 
 # --- CITY FUNCTIONS ---
@@ -548,34 +549,33 @@ def delete_productimage(request, pk):
 def upload_product_image(request):
     try:
         product_id = request.data.get('product_id')
-        image = request.FILES.get('image')
+        image_file = request.FILES.get('image')
 
-        if not product_id or not image:
+        if not product_id or not image_file:
             return Response({'detail': 'product_id и image обязательны'}, status=status.HTTP_400_BAD_REQUEST)
 
-        filename = '1.jpg'  # сохраняем всегда как 1.jpg (для теста)
-        folder_path = os.path.join('media', str(product_id))
-        file_path = os.path.join(folder_path, filename)
+        # 1. Создаём объект ProductImage без image_url
+        img_record = ProductImage.objects.create(product_id=product_id, image_url='')
 
-        full_path = os.path.join(default_storage.location, file_path)
+        # 2. Строим путь: media/<product_id>/<img_id>.jpg
+        img_filename = f"{img_record.id}.jpg"
+        folder_path = os.path.join(settings.MEDIA_ROOT, str(product_id))
+        os.makedirs(folder_path, exist_ok=True)
+        full_path = os.path.join(folder_path, img_filename)
 
-        # Создаём папку, если нужно
-        os.makedirs(os.path.dirname(full_path), exist_ok=True)
-
-        # Сохраняем файл
-        with default_storage.open(file_path, 'wb+') as destination:
-            for chunk in image.chunks():
+        # 3. Сохраняем файл вручную
+        with open(full_path, 'wb+') as destination:
+            for chunk in image_file.chunks():
                 destination.write(chunk)
 
-        # Создаём объект ProductImage
-        image_record = ProductImage.objects.create(
-            product_id=product_id,
-            image_url=f"/media/{product_id}/{filename}"
-        )
+        # 4. Обновляем image_url
+        relative_url = f"/media/{product_id}/{img_filename}"
+        img_record.image_url = relative_url
+        img_record.save()
 
         return Response({
-            'id': image_record.id,
-            'image_url': image_record.image_url
+            'id': img_record.id,
+            'image_url': img_record.image_url
         }, status=status.HTTP_201_CREATED)
 
     except Exception as e:
