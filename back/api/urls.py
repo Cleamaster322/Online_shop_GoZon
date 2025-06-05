@@ -21,11 +21,10 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .views import *
 
 urlpatterns = [
-    path('test/', test),
-    path('testPost/', test_post),
     path('users/', get_all_user),
     path('get_csrf_token/', get_csrf_token),
     path('user/me/', get_me),
+    path('create_user/', create_user),
 ]
 
 urlpatterns += [

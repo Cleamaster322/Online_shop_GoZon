@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import axios from 'axios'
-import api from "../shared/api.jsx";
+import { useNavigate } from 'react-router-dom'
+import api from "../shared/api.jsx"
 
 function Profile() {
   const [user, setUser] = useState(null)
   const [error, setError] = useState(null)
+  const navigate = useNavigate()
 
   useEffect(() => {
     const accessToken = localStorage.getItem('accessToken')
@@ -26,6 +27,13 @@ function Profile() {
       })
   }, [])
 
+  const handleLogout = () => {
+    localStorage.removeItem('accessToken')
+    localStorage.removeItem
+    ('refreshToken')
+    navigate('/')
+  }
+
   if (error) return <div>{error}</div>
   if (!user) return <div>Загрузка...</div>
 
@@ -34,6 +42,8 @@ function Profile() {
       <h2>Профиль</h2>
       <p>Имя: {user.username}</p>
       <p>Email: {user.email}</p>
+
+      <button onClick={handleLogout}>Выйти</button>
     </div>
   )
 }

@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import City, User, Category, Product, CartItem, Delivery, ProductImage
+from django.contrib.auth.hashers import make_password
 
 class CitySerializer(serializers.ModelSerializer):
     class Meta:
@@ -7,11 +8,28 @@ class CitySerializer(serializers.ModelSerializer):
         fields = ['id', 'name']
 
 class UserSerializer(serializers.ModelSerializer):
-    city = CitySerializer(read_only=True)  # вложенный сериализатор для города, если нужен
+    password = serializers.CharField(write_only=True, required=True)
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'city', 'is_staff', 'is_active', 'created_at']
+        fields = ['id', 'username', 'email', 'password', 'city', 'is_staff', 'is_active', 'created_at']
+        extra_kwargs = {
+            'username': {'required': True},
+        }
+
+    def validate_username(self, value):
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("Пользователь с таким username уже существует")
+        return value
+
+    def validate_password(self, value):
+        if not value.strip():
+            raise serializers.ValidationError("Пароль не может быть пустым")
+        return value
+
+    def create(self, validated_data):
+        validated_data['password'] = make_password(validated_data['password'])
+        return super().create(validated_data)
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -48,3 +66,4 @@ class ProductImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductImage
         fields = ['id', 'product', 'image_url']
+
