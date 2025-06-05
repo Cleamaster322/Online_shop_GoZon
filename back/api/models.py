@@ -14,6 +14,7 @@ class City(models.Model):
     def __str__(self):
         return self.name
 
+
 class UserManager(BaseUserManager):
     def create_user(self, username, email, password=None, **extra_fields):
         if not username:
@@ -61,6 +62,7 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
+
 class Product(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     seller = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -85,6 +87,7 @@ class CartItem(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.product} ({self.quantity})"
+
 
 class Delivery(models.Model):
     STATUS_CHOICES = [

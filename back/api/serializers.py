@@ -2,10 +2,12 @@ from rest_framework import serializers
 from .models import City, User, Category, Product, CartItem, Delivery, ProductImage
 from django.contrib.auth.hashers import make_password
 
+
 class CitySerializer(serializers.ModelSerializer):
     class Meta:
         model = City
         fields = ['id', 'name']
+
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True)
@@ -31,10 +33,12 @@ class UserSerializer(serializers.ModelSerializer):
         validated_data['password'] = make_password(validated_data['password'])
         return super().create(validated_data)
 
+
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ['id', 'name']
+
 
 class ProductSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
@@ -44,6 +48,7 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = ['id', 'category', 'seller', 'name', 'description', 'stock', 'price', 'created_at']
 
+
 class CartItemSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     product = ProductSerializer(read_only=True)
@@ -51,6 +56,7 @@ class CartItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = CartItem
         fields = ['id', 'user', 'product', 'quantity', 'added_at']
+
 
 class DeliverySerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
@@ -60,10 +66,10 @@ class DeliverySerializer(serializers.ModelSerializer):
         model = Delivery
         fields = ['id', 'user', 'product', 'status']
 
+
 class ProductImageSerializer(serializers.ModelSerializer):
     product = ProductSerializer(read_only=True)
 
     class Meta:
         model = ProductImage
         fields = ['id', 'product', 'image_url']
-

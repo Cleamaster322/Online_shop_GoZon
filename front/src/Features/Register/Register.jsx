@@ -25,7 +25,7 @@ function Register({ goToLogin }) {
             email,
         };
 
-        const registerResponse = await api.post('/api/create_user/', userData);
+        const registerResponse = await api.post('/api/users/create/', userData);
 
         if (registerResponse.status === 201) {
             const tokenResponse = await api.post('/api/token/', {

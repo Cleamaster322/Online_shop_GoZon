@@ -15,19 +15,18 @@ class ApiClient {
     this.setCsrfToken();
     this.setTokenAuth();
 
-    // перехват 401 с auto-refresh
     this.client.interceptors.response.use(
       response => response,
       async error => {
         const originalRequest = error.config;
 
-        const isTokenExpired =
+        const isExpiredToken =
           error.response &&
-          error.response.status === 401 &&
-          error.response.data &&
-          error.response.data.code === 'token_not_valid';
+          [401, 403].includes(error.response.status) &&
+          error.response.data?.code === 'token_not_valid' &&
+          !originalRequest._retry;
 
-        if (isTokenExpired && !originalRequest._retry) {
+        if (isExpiredToken) {
           originalRequest._retry = true;
           const refreshToken = localStorage.getItem('refreshToken');
 
@@ -45,10 +44,10 @@ class ApiClient {
 
               return this.client(originalRequest);
             } catch (refreshError) {
-              console.error('Refresh failed', refreshError);
+              console.error('Ошибка обновления токена:', refreshError);
               localStorage.removeItem('accessToken');
               localStorage.removeItem('refreshToken');
-              window.location.href = '/'; // принудительный выход
+              window.location.href = '/';
             }
           }
         }
@@ -65,7 +64,7 @@ class ApiClient {
         this.client.defaults.headers.common['X-CSRFToken'] = response.data.csrfToken;
       }
     } catch (error) {
-      console.log('Failed to get CSRF token', error);
+      console.log('Ошибка получения CSRF токена', error);
     }
   }
 
@@ -86,5 +85,4 @@ class ApiClient {
 }
 
 const api = new ApiClient(baseURL);
-
 export default api;
