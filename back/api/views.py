@@ -298,8 +298,10 @@ def post_product(request):
 @permission_classes([AllowAny])
 def update_product(request, pk):
     try:
+        data = request.data.copy()
+        data['seller'] = request.user.id
         product = Product.objects.get(pk=pk)
-        serializer = ProductSerializer(product, data=request.data, partial=(request.method == 'PATCH'))
+        serializer = ProductSerializer(product, data=data, partial=(request.method == 'PATCH'))
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -477,8 +479,12 @@ def delete_delivery(request, pk):
 @permission_classes([AllowAny])
 def get_all_productimages(request):
     try:
-        images = ProductImage.objects.all()
-        serializer = ProductImageSerializer(images, many=True)
+        queryset = ProductImage.objects.all()
+        product_id = request.GET.get('product')
+        if product_id:
+            queryset = queryset.filter(product_id=product_id)
+
+        serializer = ProductImageSerializer(queryset, many=True)
         return Response(serializer.data)
     except Exception as e:
         return Response({'detail': 'Ошибка сервера при получении изображений', 'error': str(e)},
