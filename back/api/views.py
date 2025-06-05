@@ -1,3 +1,6 @@
+import os
+
+from django.core.files.storage import default_storage
 from django.middleware.csrf import get_token
 from django.shortcuts import render
 from rest_framework import status
@@ -274,10 +277,13 @@ def get_product(request, pk):
 
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def post_product(request):
     try:
-        serializer = ProductSerializer(data=request.data)
+        data = request.data.copy()
+        data['seller'] = request.user.id  # ← автоматически проставляем seller
+        print(data)
+        serializer = ProductSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -534,6 +540,46 @@ def delete_productimage(request, pk):
         return Response({'detail': 'Изображение не найдено'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         return Response({'detail': 'Ошибка сервера при удалении изображения', 'error': str(e)},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def upload_product_image(request):
+    try:
+        product_id = request.data.get('product_id')
+        image = request.FILES.get('image')
+
+        if not product_id or not image:
+            return Response({'detail': 'product_id и image обязательны'}, status=status.HTTP_400_BAD_REQUEST)
+
+        filename = '1.jpg'  # сохраняем всегда как 1.jpg (для теста)
+        folder_path = os.path.join('media', str(product_id))
+        file_path = os.path.join(folder_path, filename)
+
+        full_path = os.path.join(default_storage.location, file_path)
+
+        # Создаём папку, если нужно
+        os.makedirs(os.path.dirname(full_path), exist_ok=True)
+
+        # Сохраняем файл
+        with default_storage.open(file_path, 'wb+') as destination:
+            for chunk in image.chunks():
+                destination.write(chunk)
+
+        # Создаём объект ProductImage
+        image_record = ProductImage.objects.create(
+            product_id=product_id,
+            image_url=f"/media/{product_id}/{filename}"
+        )
+
+        return Response({
+            'id': image_record.id,
+            'image_url': image_record.image_url
+        }, status=status.HTTP_201_CREATED)
+
+    except Exception as e:
+        return Response({'detail': 'Ошибка загрузки изображения', 'error': str(e)},
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

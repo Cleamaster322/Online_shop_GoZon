@@ -41,8 +41,6 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
-    category = CategorySerializer(read_only=True)
-    seller = UserSerializer(read_only=True)
 
     class Meta:
         model = Product
@@ -73,3 +71,10 @@ class ProductImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductImage
         fields = ['id', 'product', 'image_url']
+
+    def validate_image_url(self, value):
+        if not value.lower().endswith(('.jpg', '.jpeg', '.png', '.webp')):
+            raise serializers.ValidationError("Поддерживаются только изображения")
+        if not value.startswith('/media/') and not value.startswith('http'):
+            raise serializers.ValidationError("Неверный путь к изображению")
+        return value

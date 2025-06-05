@@ -70,6 +70,7 @@ urlpatterns = [
     path('productimages/create/', post_productimage),
     path('productimages/<int:pk>/update/', update_productimage),
     path('productimages/<int:pk>/delete/', delete_productimage),
+    path('productimages/upload/', upload_product_image),
 
     path('get_csrf_token/', get_csrf_token),
 ]
