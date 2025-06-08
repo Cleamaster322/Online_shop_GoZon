@@ -8,6 +8,7 @@ import MainShop from "./Pages/MainShop.jsx";
 import ProductPage from "./Pages/ProductPage.jsx";
 import MyProducts from "./Pages/MyProducts.jsx";
 import EditProduct from "./Pages/EditProduct.jsx";
+import CartPage from "./Pages/CartPage.jsx";
 
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
                 <Route path="/product/:id" element={<ProductPage />} />
                 <Route path="/my-products" element={<MyProducts />} />
                 <Route path="edit-product/:id" element={<EditProduct />} />
+                <Route path="/CartPage" element={<CartPage />} />
             </Routes>
         </>
     );
