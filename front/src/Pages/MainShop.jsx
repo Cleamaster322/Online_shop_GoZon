@@ -37,6 +37,39 @@ function MainShop() {
             });
     }, []);
 
+    const addToCart = async (productId) => {
+        try {
+            const token = localStorage.getItem('accessToken');
+            if (!token) return alert('Авторизуйтесь для добавления в корзину');
+
+            const userId = JSON.parse(atob(token.split('.')[1])).user_id;
+
+            // Получаем текущие элементы корзины
+            const res = await api.get('/api/cartitems/');
+            const existing = res.data.find(item => item.user === userId && item.product === productId);
+
+            if (existing) {
+                // Если уже есть — обновляем количество
+                await api.patch(`/api/cartitems/${existing.id}/update/`, {
+                    quantity: existing.quantity + 1
+                });
+            } else {
+                // Если нет — создаём новый
+                await api.post('/api/cartitems/create/', {
+                    user: userId,
+                    product: productId,
+                    quantity: 1
+                });
+            }
+
+            alert('✅ Товар добавлен в корзину');
+        } catch (err) {
+            console.error(err);
+            alert('❌ Не удалось добавить в корзину');
+        }
+    };
+
+
     if (error) return <div>{error}</div>;
     if (products.length === 0) return <div>Загрузка товаров...</div>;
 
@@ -107,7 +140,7 @@ function MainShop() {
                     <button
                         onClick={e => {
                             e.stopPropagation();
-                            // TODO: добавить логику добавления в корзину
+                            addToCart(product.id);
                             alert(`Товар "${product.name}" добавлен в корзину`);
                         }}
                         className="w-full bg-purple-400 hover:bg-purple-600 text-white font-semibold py-1 rounded transition"
