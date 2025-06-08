@@ -9,6 +9,7 @@ function Auth() {
 
     return (
         <div>
+            <h1 className="text-5xl font-bold text-center py-{60px}"> Авторизация  </h1>
             {isRegistering ? (
                 <Register goToLogin={() => setIsRegistering(false)}/>
             ) : (

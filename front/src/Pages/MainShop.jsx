@@ -2,6 +2,7 @@ import React, {useEffect, useState} from 'react';
 import api from '../shared/api.jsx';
 import {useNavigate} from "react-router-dom";
 
+
 function MainShop() {
     const [products, setProducts] = useState([]);
     const [images, setImages] = useState({});
@@ -40,44 +41,114 @@ function MainShop() {
     if (products.length === 0) return <div>Загрузка товаров...</div>;
 
     return (
-        <div style={{padding: '20px', display: 'flex', flexWrap: 'wrap', gap: '20px'}}>
+        <div className="min-h-screen bg-purple-50"> 
+            {/* Header */}
+            <header className="bg-purple-300 flex items-center px-6 py-3 rounded-xl gap-4">
+                {/* Left group: logo, brand, burger */}
+                <div className="flex items-center gap-4">
+                    <img src="./public/logo.jpg" alt="GosZakaz logo" className="w-14 h-14 rounded-full border-2 border-white" />
+                    <span className="text-3xl font-bold text-white">GosZakaz</span>
+                    <button className="p-2 rounded bg-purple-200 hover:bg-purple-400 hidden md:flex items-center">
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                </div>
+                {/* Search bar */}
+                <input
+                    type="text"
+                    placeholder="Найти на GosZakaz"
+                    className="flex-1 min-w-0 px-2 py-2 rounded bg-white text-gray-700 focus:outline-none mx-4"
+                />
+                {/* Profile & Cart */}
+                <div className="hidden md:flex items-center gap-4">
+                    <button className="flex flex-col items-center text-white hover:text-purple-900">
+                        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="2" />
+                            <path d="M6 20c0-2.21 3.58-4 8-4s8 1.79 8 4" stroke="currentColor" strokeWidth="2" />
+                        </svg>
+                        <span className="text-xs">Войти</span>
+                    </button>
+                    <button className="flex flex-col items-center text-white hover:text-purple-900">
+                        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M3 3h18l-1.68 13.39A2 2 0 0117.34 18H6.66a2 2 0 01-1.98-1.61L3 3z" stroke="currentColor" strokeWidth="2" />
+                            <circle cx="9" cy="21" r="1" />
+                            <circle cx="15" cy="21" r="1" />
+                        </svg>
+                        <span className="text-xs">Корзина</span>
+                    </button>
+                </div>
+            </header>
+
+        {/* Product grid */}
+        <main className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 py-6 justify-items-center">
             {products.map(product => (
                 <div
                     key={product.id}
                     onClick={() => navigate(`/product/${product.id}`)}
-                    style={{
-                        border: '1px solid #ccc',
-                        padding: '10px',
-                        width: '200px',
-                        cursor: 'pointer',
-                    }}
+                    className="bg=white rounded-xl shadow-lg p-4 w-full max-w-xs cursor-pointer hover:shadow-2xl transition-shadow duration-300"
                 >
                     {images[product.id] ? (
                         <img
                             src={`http://127.0.0.1:8000${images[product.id]}`}
                             alt={product.name}
-                            style={{width: '100%', height: '200px', objectFit: 'cover'}}
+                            className="w-full h-40 object-cover rounded-lg mb-2"
                         />
                     ) : (
-                        <div style={{height: '200px', background: '#eee'}}>Нет изображения</div>
+                        <div className="w-full h-40 bg-gray-200 rounded-lg mb-2 flex items-center justify-center text-gray-400">
+                            Нет изображения
+                        </div>
                     )}
 
-                    <h3>{product.name}</h3>
-                    <p>{product.description}</p>
-                    <p><strong>{parseFloat(product.price).toFixed(2)} ₽</strong></p>
-
+                    <p className="text-xl font-bold text-purple-700 mb-1">{parseFloat(product.price).toFixed(2)} ₽</p>
+                    <p className="text-xl front-bold text-black mb-1">{product.name}</p>
+                    <p className="text-gray-600 mb-1">{product.description}</p>
+                
                     <button
                         onClick={e => {
                             e.stopPropagation();
                             // TODO: добавить логику добавления в корзину
                             alert(`Товар "${product.name}" добавлен в корзину`);
                         }}
+                        className="w-full bg-purple-400 hover:bg-purple-600 text-white font-semibold py-1 rounded transition"
                     >
+                        <svg className="inline w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path d="M3 3h18l-1.68 13.39A2 2 0 0117.34 18H6.66a2 2 0 01-1.98-1.61L3 3z" stroke="currentColor" strokeWidth="2" />
+                                <circle cx="9" cy="21" r="1" />
+                                <circle cx="15" cy="21" r="1" />
+                        </svg>
                         В корзину
                     </button>
                 </div>
             ))}
-        </div>
+        </main>
+        {/* Mobile Footer */}
+        <footer className="fixed bottom-0 left-0 w-full bg-purple-300 flex md:hidden justify-around items-center py-2 z-50">
+                {/* Burger */}
+                <button className="p-2 rounded bg-purple-200 hover:bg-purple-400">
+                    <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+                {/* Profile */}
+                <button className="flex flex-col items-center text-white hover:text-purple-900">
+                    <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="2" />
+                        <path d="M6 20c0-2.21 3.58-4 8-4s8 1.79 8 4" stroke="currentColor" strokeWidth="2" />
+                    </svg>
+                    <span className="text-xs">Войти</span>
+                </button>
+                {/* Cart */}
+                <button className="flex flex-col items-center text-white hover:text-purple-900">
+                    <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M3 3h18l-1.68 13.39A2 2 0 0117.34 18H6.66a2 2 0 01-1.98-1.61L3 3z" stroke="currentColor" strokeWidth="2" />
+                        <circle cx="9" cy="21" r="1" />
+                        <circle cx="15" cy="21" r="1" />
+                    </svg>
+                    <span className="text-xs">Корзина</span>
+                </button>
+            </footer>
+    </div>
     );
 }
 

@@ -1,5 +1,3 @@
-
-import './App.css'
 import Auth from './Pages/Auth.jsx'
 import {Route, Routes} from "react-router-dom";
 import Profile from './Pages/Profile.jsx'
