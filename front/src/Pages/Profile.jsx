@@ -44,6 +44,9 @@ function Profile() {
 
             <button onClick={() => navigate('/test-upload')}>Создать товар</button>
             <button onClick={() => navigate('/my-products')}>Показать свои товары</button>
+            <button onClick={() => navigate('/CartPage')}>Показать Корзину</button>
+            <button onClick={() => navigate('/Shop')}>Магазин</button>
+
             <button onClick={handleLogout}>Выйти</button>
         </div>
     );
