@@ -215,7 +215,7 @@ function ProductPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
                 </button>
-                <button onClick={() => navigate('/home')} className="flex flex-col items-center text-white hover:text-purple-900">
+                <button onClick={handleProfileClick} className="flex flex-col items-center text-white hover:text-purple-900">
                     <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="2" />
                         <path d="M6 20c0-2.21 3.58-4 8-4s8 1.79 8 4" stroke="currentColor" strokeWidth="2" />
