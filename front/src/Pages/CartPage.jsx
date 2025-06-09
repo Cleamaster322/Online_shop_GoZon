@@ -10,6 +10,8 @@ function CartPage() {
   const [error, setError] = useState(null);
   const [userId, setUserId] = useState(null);
 
+  const isEmpty = cartItems.length === 0;
+
 // ограничение на количество товаров
 
   useEffect(() => {
@@ -114,7 +116,6 @@ function CartPage() {
   }, 0);
 
   if (error) return <div className="text-center text-red-500 mt-10">{error}</div>;
-  if (cartItems.length === 0) return <div>Корзина пуста</div>;
 
   return (
     <div className="min-h-screen bg-[#fdefff] py-8 px-4 md:px-8 text-black">
@@ -125,11 +126,14 @@ function CartPage() {
           <div className="bg-white rounded-3xl shadow-md p-6">
             <h2 className="text-2xl  font-bold mb-2">Корзина</h2>
             <p className="text-xs text-gray-400 mb-6">
-              {cartItems.length} товара(ов)
+              {isEmpty ? 'Нет товаров' : `${cartItems.length} товара(ов)`}
             </p>
 
             <ul className="space-y-6">
-               {cartItems.map((item) => {
+              {isEmpty ? (
+                  <li className="text-gray-400">Ваша корзина пуста</li>
+              ) : (
+                cartItems.map((item) => {
                  const product = products[item.product];
                  if (!product) return null;
                  const likedNow = liked.has(item.id);
@@ -209,7 +213,8 @@ function CartPage() {
                     </div>
                   </li>
                  );
-               })}
+               })
+              )}
             </ul>
           </div>
 
@@ -230,7 +235,7 @@ function CartPage() {
             </button>
             <p className="text-sm text-gray-500">Товаров, {cartItems.length} шт.</p>
             <p className="text-3xl font-extrabold mt-2"> {total.toFixed(2)} ₽</p>
-            <button className="mt-6 w-full bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 rounded-xl transition">
+            <button disabled={isEmpty} className={`mt-6 w-full rounded-xl py-2 font-semibold transition ${isEmpty ? 'bg-gray-300 cursor-not-allowed text-white' : 'bg-purple-500 hover:bg-purple-600 text-white'}`}>
               Заказать
             </button>
           </div>

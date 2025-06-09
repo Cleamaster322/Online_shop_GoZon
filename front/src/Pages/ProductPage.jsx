@@ -20,6 +20,39 @@ function ProductPage() {
         }
     };
 
+    const handleCartAdd = (e, productId) => {
+      e.stopPropagation();
+      if (localStorage.getItem('accessToken')) {
+        addToCart(productId);
+      } else {
+        setShowAuth(true);
+      }
+    };
+
+    const handleCartClick = () => {
+        if (localStorage.getItem('accessToken')) {
+            navigate('/CartPage');
+        } else {
+            setShowAuth(true);
+        }
+    };
+
+    const handleAddAndGo = async (e, productId) => {
+      e.stopPropagation();
+
+      if (!localStorage.getItem('accessToken')) {
+          setShowAuth(true);
+          return;
+      }
+      try {
+          await addToCart(productId);
+          navigate('/CartPage');
+      } catch (err) {
+          console.error(err);
+          alert('❌ Не удалось добавить товар в корзину');
+      }
+    };
+
     const addToCart = async (productId) => {
         try {
             const token = localStorage.getItem('accessToken');
@@ -93,7 +126,7 @@ function ProductPage() {
                         </svg>
                         <span className="text-xs">{localStorage.getItem('accessToken') ? 'Профиль' : 'Войти'}</span>
                     </button>
-                    <button onClick={() => navigate("/CartPage")} className="flex flex-col items-center text-white hover:text-purple-900">
+                    <button onClick={handleCartClick} className="flex flex-col items-center text-white hover:text-purple-900">
                         <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path d="M3 3h18l-1.68 13.39A2 2 0 0117.34 18H6.66a2 2 0 01-1.98-1.61L3 3z" stroke="currentColor" strokeWidth="2" />
                             <circle cx="9" cy="21" r="1" />
@@ -156,8 +189,8 @@ function ProductPage() {
                         <div className="mt-4 mr-34">
                             <div className="bg-white rounded-2xl p-8 shadow-lg w-[270px] flex flex-col items-center">
                                 <div className="text-4xl font-bold text-purple-500 mb-4">{parseFloat(product.price).toFixed(0)} ₽</div>
-                                <button onClick={e => {e.stopPropagation(); addToCart(product.id);}} className="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 rounded mb-3 transition">В корзину</button>
-                                <button onClick={async e => {e.stopPropagation(); await addToCart(product.id); navigate('/CartPage');}} className="w-full bg-purple-300 hover:bg-purple-400 text-purple-600 font-semibold py-2 rounded transition">Купить сейчас</button>
+                                <button onClick={e => handleCartAdd(e, product.id)} className="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 rounded mb-3 transition">В корзину</button>
+                                <button onClick={e => handleAddAndGo(e, product.id)} className="w-full bg-purple-300 hover:bg-purple-400 text-purple-600 font-semibold py-2 rounded transition">Купить сейчас</button>
                             </div>
                         </div>
                     </div>
