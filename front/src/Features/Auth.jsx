@@ -22,15 +22,10 @@ export default function Auth({ onClose }) {
 
     const handleRegister = async () => {
         try {
-            const userData = {
-                username,
-                password,
-                email,
-            };
-            const registerResponse = await api.post('/api/users/create/', userData);
+            const registerResponse = await api.post('/api/users/create/', { username: login, password, email });
             if (registerResponse.status === 201) {
                 const tokenResponse = await api.post('/api/token/', {
-                    username,
+                    username: login,
                     password
                 });
     
@@ -68,14 +63,14 @@ export default function Auth({ onClose }) {
           </h2>
           <input
             type="text"
-            placeholder="Придумайте логин"
+            placeholder="Введите логин"
             className="w-full mb-3 px-4 py-2 rounded text-black bg-white placeholder-gray-400 font-medium"
             value={login}
             onChange={e => setLogin(e.target.value)}
           />
           <input
             type="password"
-            placeholder="Придумайте пароль"
+            placeholder="Введите пароль"
             className="w-full mb-3 px-4 py-2 rounded  text-black bg-white placeholder-gray-400 font-medium"
             value={password}
             onChange={e => setPassword(e.target.value)}
