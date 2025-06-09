@@ -6,12 +6,14 @@ import ProductPage from "./Pages/ProductPage.jsx";
 import MyProducts from "./Pages/MyProducts.jsx";
 import EditProduct from "./Pages/EditProduct.jsx";
 import CartPage from "./Pages/CartPage.jsx";
+import AuthPage from "./Pages/Auth.jsx";
 
 
 function App() {
     return (
         <>
             <Routes>
+                <Route path="/Auth" element={<AuthPage />} />
                 <Route path="/" element={<MainShop />} />
                 <Route path="/home" element={<Profile />} />
                 <Route path="/test-upload" element={<TestUpload />} />

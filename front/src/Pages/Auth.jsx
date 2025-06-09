@@ -1,22 +1,19 @@
 import React, {useState} from 'react';
-import Login from '../Features/Login/Login.jsx';
-import Register from '../Features/Register/Register.jsx';
+import Auth from '../Features/Auth.jsx';
 
 
-function Auth() {
-    const [isRegistering, setIsRegistering] = useState(false);
-
+function AuthPage() {
+        const [showAuth, setShowAuth] = useState(true);
 
     return (
         <div>
-            <h1 className="text-5xl font-bold text-center py-{60px}"> Авторизация  </h1>
-            {isRegistering ? (
-                <Register goToLogin={() => setIsRegistering(false)}/>
-            ) : (
-                <Login goToRegister={() => setIsRegistering(true)}/>
+            {showAuth && (
+                <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+                    <Auth onClose={() => setShowAuth(false)} />
+                </div>
             )}
         </div>
     );
 }
 
-export default Auth
+export default AuthPage
