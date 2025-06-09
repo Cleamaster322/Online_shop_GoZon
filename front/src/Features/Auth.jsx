@@ -14,6 +14,7 @@ export default function Auth({ onClose }) {
         try {
             const res = await api.post('/api/token/', { username: login, password });
             localStorage.setItem('accessToken', res.data.access);
+            localStorage.setItem('refreshToken', res.data.refresh)
             window.location.reload();
         } catch (err) {
         setError('Ошибка входа. Проверьте логин и пароль.');

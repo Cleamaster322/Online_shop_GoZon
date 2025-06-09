@@ -10,7 +10,7 @@ function CartPage() {
   const [error, setError] = useState(null);
   const [userId, setUserId] = useState(null);
 
-
+// ограничение на количество товаров
 
   useEffect(() => {
     // Получаем user_id из accessToken
@@ -38,35 +38,38 @@ function CartPage() {
         ]);
 
         /** Формируем map продуктов */
-        const prodMap = {};
-        for (const p of prodRes.data) prodMap[p.id] = p;
+        const prodMap = Object.fromEntries(prodRes.data.map(p => [p.id, p]));
+        const filtered = cartRes.data.filter(i => i.user === userId);
+
         setProducts(prodMap);
+        setCartItems(filtered);
 
-        /** Фильтруем корзину по текущему пользователю */
-        setCartItems(cartRes.data.filter((i) => i.user === userId));
-        // Для каждого товара загружаем первое изображение
-        const imageMap = {};
-        for (let product of cartItems) {
-          console.log(product)
+        /* 3. Загружаем изображения параллельно и одним проходом  */
+        const pairs = await Promise.all(
+          filtered.map(async (item) => {
+            try {
+              const { data } = await api.get(`/api/productimages/?product=${item.product}`);
+              return data.length ? [item.product, data[0].image_url] : null;
+            } catch {
+              console.error(`Не удалось загрузить изображение товара ${item.product}`);
+              return null;
+            }
+          })
+        );
 
-          const res = await api.get(`/api/productimages/?product=${product.id}`);
-          if (res.data.length > 0) {
-              imageMap[product.id] = res.data[0].image_url;
-              console.log(imageMap)
-          }
-
-        }
-        setImages(imageMap);
-      } catch {
+        setImages(Object.fromEntries(pairs.filter(Boolean)));   // ключ = id Product
+      } catch (e) {
+        console.error(e);
         setError('Ошибка загрузки данных');
       }
     };
+
     fetchData();
   }, [userId]);
 
   /* ------------------ API helpers ------------------ */
   const patchQuantity = (id, quantity) =>
-    api.patch(`cartitems/${id}/update/`, { quantity }).catch((err) => {
+    api.patch(`api/cartitems/${id}/update/`, { quantity }).catch((err) => {
       console.error(err);
       setError('Не удалось обновить корзину на сервере');
     });

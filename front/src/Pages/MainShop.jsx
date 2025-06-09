@@ -19,6 +19,14 @@ function MainShop() {
         }
     };
 
+    const handleCartClick = () => {
+        if (localStorage.getItem('accessToken')) {
+            navigate('/CartPage');
+        } else {
+            setShowAuth(true);
+        }
+    };
+
     useEffect(() => {
         // Загружаем все товары
         api.get('/api/products/')
@@ -116,7 +124,7 @@ function MainShop() {
                         </svg>
                         <span className="text-xs">{localStorage.getItem('accessToken') ? 'Профиль' : 'Войти'}</span>
                     </button>
-                    <button onClick={() => navigate("/CartPage")} className="flex flex-col items-center text-white hover:text-purple-900">
+                    <button onClick={handleCartClick} className="flex flex-col items-center text-white hover:text-purple-900">
                         <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path d="M3 3h18l-1.68 13.39A2 2 0 0117.34 18H6.66a2 2 0 01-1.98-1.61L3 3z" stroke="currentColor" strokeWidth="2" />
                             <circle cx="9" cy="21" r="1" />
