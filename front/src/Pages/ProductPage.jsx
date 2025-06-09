@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import api from '../shared/api.jsx';
+import Auth from '../Features/Auth.jsx';
 
 function ProductPage() {
     const {id} = useParams();
@@ -8,7 +9,48 @@ function ProductPage() {
     const [images, setImages] = useState([]);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
+    const [showAuth, setShowAuth] = useState(false);
     const [selectedImgIdx, setSelectedImgIdx] = useState(0);
+
+    const handleProfileClick = () => {
+        if (localStorage.getItem('accessToken')) {
+            navigate('/home');
+        } else {
+            setShowAuth(true);
+        }
+    };
+
+    const addToCart = async (productId) => {
+        try {
+            const token = localStorage.getItem('accessToken');
+            if (!token) return alert('Авторизуйтесь для добавления в корзину');
+
+            const userId = JSON.parse(atob(token.split('.')[1])).user_id;
+
+            // Получаем текущие элементы корзины
+            const res = await api.get('/api/cartitems/');
+            const existing = res.data.find(item => item.user === userId && item.product === productId);
+
+            if (existing) {
+                // Если уже есть — обновляем количество
+                await api.patch(`/api/cartitems/${existing.id}/update/`, {
+                    quantity: existing.quantity + 1
+                });
+            } else {
+                // Если нет — создаём новый
+                await api.post('/api/cartitems/create/', {
+                    user: userId,
+                    product: productId,
+                    quantity: 1
+                });
+            }
+
+            alert('✅ Товар добавлен в корзину');
+        } catch (err) {
+            console.error(err);
+            alert('❌ Не удалось добавить в корзину');
+        }
+    };
 
     useEffect(() => {
         // Загружаем товар
@@ -40,7 +82,7 @@ function ProductPage() {
                     className="flex-1 min-w-0 px-2 py-2 rounded bg-white text-gray-700 focus:outline-none mx-4"
                 />
                 <div className="hidden md:flex items-center gap-4">
-                    <button onClick={() => navigate('/home')} className="flex flex-col items-center text-white hover:text-purple-900">
+                    <button onClick={handleProfileClick} className="flex flex-col items-center text-white hover:text-purple-900">
                         <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="2" />
                             <path d="M6 20c0-2.21 3.58-4 8-4s8 1.79 8 4" stroke="currentColor" strokeWidth="2" />
@@ -110,8 +152,8 @@ function ProductPage() {
                         <div className="mt-4 mr-34">
                             <div className="bg-white rounded-2xl p-8 shadow-lg w-[270px] flex flex-col items-center">
                                 <div className="text-4xl font-bold text-purple-500 mb-4">{parseFloat(product.price).toFixed(0)} ₽</div>
-                                <button className="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 rounded mb-3 transition">В корзину</button>
-                                <button className="w-full bg-purple-300 hover:bg-purple-400 text-purple-600 font-semibold py-2 rounded transition" disabled>Купить сейчас</button>
+                                <button onClick={e => {e.stopPropagation(); addToCart(product.id);}} className="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 rounded mb-3 transition">В корзину</button>
+                                <button onClick={async e => {e.stopPropagation(); await addToCart(product.id); navigate('/CartPage');}} className="w-full bg-purple-300 hover:bg-purple-400 text-purple-600 font-semibold py-2 rounded transition">Купить сейчас</button>
                             </div>
                         </div>
                     </div>
@@ -162,7 +204,7 @@ function ProductPage() {
             </main>
             {/* Fixed Add to Cart button for mobile */}
             <div className="md:hidden fixed bottom-16 left-0 w-full px-4 z-50">
-                <button className="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 rounded-xl shadow-lg text-lg">
+                <button onClick={e => {e.stopPropagation(); addToCart(product.id);}} className="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 rounded-xl shadow-lg text-lg">
                     В корзину
                 </button>
             </div>
@@ -189,6 +231,12 @@ function ProductPage() {
                     <span className="text-xs">Корзина</span>
                 </button>
             </footer>
+            {/* Auth Modal */}
+            {showAuth && (
+                <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+                    <Auth onClose={() => setShowAuth(false)} />
+                </div>
+            )}
         </div>
     );
 }

@@ -156,7 +156,6 @@ function MainShop() {
                         onClick={e => {
                             e.stopPropagation();
                             addToCart(product.id);
-                            alert(`Товар "${product.name}" добавлен в корзину`);
                         }}
                         className="w-full bg-purple-400 hover:bg-purple-600 text-white font-semibold py-1 rounded transition"
                     >
