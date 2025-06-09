@@ -1,11 +1,16 @@
 import React, { useEffect, useState } from 'react';
+import { Minus, Plus, Heart, Trash2 } from 'lucide-react';
 import api from '../shared/api.jsx';
 
 function CartPage() {
   const [cartItems, setCartItems] = useState([]);
   const [products, setProducts] = useState({});
+  const [images, setImages] = useState({});
+  const [liked, setLiked] = useState(() => new Set());  // id товаров, помеченных «сердцем»
   const [error, setError] = useState(null);
   const [userId, setUserId] = useState(null);
+
+
 
   useEffect(() => {
     // Получаем user_id из accessToken
@@ -21,36 +26,83 @@ function CartPage() {
     }
   }, []);
 
+
   useEffect(() => {
     if (!userId) return;
 
-    // Загружаем все продукты
-    api.get('/api/products/')
-      .then(res => {
-        const map = {};
-        for (let p of res.data) {
-          map[p.id] = p;
-        }
-        setProducts(map);
-      })
-      .catch(() => setError('Ошибка загрузки товаров'));
+    const fetchData = async () => {
+      try {
+        const [prodRes, cartRes] = await Promise.all([
+          api.get('/api/products/'),
+          api.get('/api/cartitems/'),
+        ]);
 
-    // Загружаем корзину
-    api.get('/api/cartitems/')
-      .then(res => {
-        const myItems = res.data.filter(item => item.user === userId);
-        setCartItems(myItems);
-      })
-      .catch(() => setError('Ошибка загрузки корзины'));
+        /** Формируем map продуктов */
+        const prodMap = {};
+        for (const p of prodRes.data) prodMap[p.id] = p;
+        setProducts(prodMap);
+
+        /** Фильтруем корзину по текущему пользователю */
+        setCartItems(cartRes.data.filter((i) => i.user === userId));
+        // Для каждого товара загружаем первое изображение
+        const imageMap = {};
+        for (let product of cartItems) {
+          console.log(product)
+
+          const res = await api.get(`/api/productimages/?product=${product.id}`);
+          if (res.data.length > 0) {
+              imageMap[product.id] = res.data[0].image_url;
+              console.log(imageMap)
+          }
+
+        }
+        setImages(imageMap);
+      } catch {
+        setError('Ошибка загрузки данных');
+      }
+    };
+    fetchData();
   }, [userId]);
 
-  const handleDelete = async (id) => {
-    try {
-      await api.delete(`/api/cartitems/${id}/delete/`);
-      setCartItems(prev => prev.filter(i => i.id !== id));
-    } catch (err) {
+  /* ------------------ API helpers ------------------ */
+  const patchQuantity = (id, quantity) =>
+    api.patch(`cartitems/${id}/update/`, { quantity }).catch((err) => {
       console.error(err);
-    }
+      setError('Не удалось обновить корзину на сервере');
+    });
+
+  const deleteItem = (id) =>
+    api.delete(`/api/cartitems/${id}/delete/`).catch((err) => {
+      console.error(err);
+      setError('Не удалось удалить товар на сервере');
+    });
+
+  const increment = (item) => {
+    setCartItems((prev) =>
+      prev.map((i) => (i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i)),
+    );
+    patchQuantity(item.id, item.quantity + 1);
+  };
+
+  const decrement = (item) => {
+    if (item.quantity === 1) return remove(item.id);
+    setCartItems((prev) =>
+      prev.map((i) => (i.id === item.id ? { ...i, quantity: i.quantity - 1 } : i)),
+    );
+    patchQuantity(item.id, item.quantity - 1);
+  };
+
+  const remove = (id) => {
+    setCartItems((prev) => prev.filter((i) => i.id !== id));
+    deleteItem(id);
+  };
+
+  const toggleLike = (id) => {
+    setLiked((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
   };
 
   const total = cartItems.reduce((acc, item) => {
@@ -58,33 +110,152 @@ function CartPage() {
     return product ? acc + product.price * item.quantity : acc;
   }, 0);
 
-  if (error) return <div>{error}</div>;
+  if (error) return <div className="text-center text-red-500 mt-10">{error}</div>;
   if (cartItems.length === 0) return <div>Корзина пуста</div>;
 
   return (
-    <div style={{ padding: '20px' }}>
-      <h2>Корзина</h2>
+    <div className="min-h-screen bg-[#fdefff] py-8 px-4 md:px-8 text-black">
+      <div className="max-w-6xl mx-auto grid grid-cols-1 xl:grid-cols-3 gap-8">
+        {/* Левая часть: корзина и блоки оформления */}
+        <div className="xl:col-span-2 space-y-10">
+          {/* Карточка корзины */}
+          <div className="bg-white rounded-3xl shadow-md p-6">
+            <h2 className="text-2xl  font-bold mb-2">Корзина</h2>
+            <p className="text-xs text-gray-400 mb-6">
+              {cartItems.length} товара(ов)
+            </p>
 
-      <ul>
-        {cartItems.map(item => {
-          const product = products[item.product];
-          if (!product) return null;
+            <ul className="space-y-6">
+               {cartItems.map((item) => {
+                 const product = products[item.product];
+                 if (!product) return null;
+                 const likedNow = liked.has(item.id);
+                 return (
+                     <li
+                         key={item.id}
+                         className="flex flex-col sm:flex-row sm:items-center gap-4 pb-4 border-b last:border-none"
+                     >
+                       {/* Изображение */}
+                       <img
+                           src={`http://127.0.0.1:8000${images[product.id]}`}
+                           alt={product.name}
+                           className="w-20 h-20 rounded-xl object-cover"
+                       />
 
-          return (
-            <li key={item.id} style={{ marginBottom: '20px', borderBottom: '1px solid #ccc' }}>
-              <p><strong>{product.name}</strong></p>
-              <p>Количество: {item.quantity}</p>
-              <p>Цена за шт: {product.price} ₽</p>
-              <p>Сумма: {product.price * item.quantity} ₽</p>
-              <button onClick={() => handleDelete(item.id)}>Удалить</button>
-            </li>
-          );
-        })}
-      </ul>
+                       {/* Инфо */}
+                       <div className="flex-1">
+                         <p className="font-semibold leading-tight  line-clamp-2">
+                           {product.name}
+                         </p>
+                         <p className="text-sm text-gray-500 line-clamp-1">
+                           {product.description || 'Описание товара'}
+                         </p>
 
-      <h3>Итого: {total.toFixed(2)} ₽</h3>
+                         {/*/!* Действия (mobile) *!/*/}
+                         {/*<div className="flex sm:hidden items-center gap-4 mt-3">*/}
+                         {/*  <IconButton icon={Heart}/>*/}
+                         {/*  <IconButton icon={Trash2} onClick={() => handleDelete(item.id)}/>*/}
+                         {/*</div>*/}
+                       </div>
+
+                       {/* Кол-во + цена */}
+                       <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-2 select-none">
+                          <IconButton label="Уменьшить" onClick={() => decrement(item)}>
+                            <Minus size={14} />
+                          </IconButton>
+                          <span className="px-1 text-black">{item.quantity}</span>
+                          <IconButton label="Увеличить" onClick={() => increment(item)}>
+                            <Plus size={14} />
+                          </IconButton>
+                        </div>
+                        <p className="font-bold whitespace-nowrap text-black">
+                          {product.price * item.quantity} ₽
+                        </p>
+                       </div>
+
+                       {/* Действия (desktop) */}
+                       <div className="flex items-center gap-4 ml-4">
+                        <IconButton label="В избранное" onClick={() => toggleLike(item.id)}>
+                          <Heart
+                            size={14}
+                            className={likedNow ? 'text-red-500 fill-current' : ''}
+                            fill={likedNow ? 'currentColor' : 'none'}
+                          />
+                        </IconButton>
+                        <IconButton label="Удалить" onClick={() => remove(item.id)}>
+                          {/* Trash2 заменён SVG, чтобы не тащить ещё одну иконку */}
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                            <path d="M10 11v6" />
+                            <path d="M14 11v6" />
+                            <path d="M15 6V4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v2" />
+                          </svg>
+                        </IconButton>
+                    </div>
+                  </li>
+                 );
+               })}
+            </ul>
+          </div>
+
+          {/* Способ доставки */}
+          <SectionCard title="Способ доставки">
+            <button className="text-purple-600 hover:underline">Выбрать адрес доставки</button>
+          </SectionCard>
+          <SectionCard title="Способ оплаты">
+            <button className="text-purple-600 hover:underline">Выбрать способ оплаты</button>
+          </SectionCard>
+        </div>
+
+        {/* Правая часть: итог */}
+        <aside className="sticky top-28 self-start">
+          <div className="bg-white rounded-3xl shadow-md p-6 w-full xl:w-72">
+            <button className="text-sm text-purple-600 hover:underline mb-3 text-left w-full">
+              Выбрать адрес доставки
+            </button>
+            <p className="text-sm text-gray-500">Товаров, {cartItems.length} шт.</p>
+            <p className="text-3xl font-extrabold mt-2"> {total.toFixed(2)} ₽</p>
+            <button className="mt-6 w-full bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 rounded-xl transition">
+              Заказать
+            </button>
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }
 
+// Компоненты-помощники
+  const IconButton = ({ children, onClick, label }) => (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      className="w-6 h-6 flex items-center justify-center border rounded hover:bg-gray-100 transition text-black"
+    >
+      {children}
+    </button>
+  );
+
+  const SectionCard = ({ title, children }) => (
+    <div className="bg-white rounded-3xl shadow-md p-6 border-l-4 border-purple-400 text-black">
+      <h3 className="font-bold mb-3 text-black">{title}</h3>
+      {children}
+    </div>
+  );
+
+
 export default CartPage;
+

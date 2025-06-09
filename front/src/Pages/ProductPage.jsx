@@ -65,8 +65,12 @@ function ProductPage() {
             });
     }, [id]);
 
-    if (error) return <div>{error}</div>;
-    if (!product) return <div>Загрузка...</div>;
+    if (error) return <div className="text-center text-red-500 mt-10">{error}</div>;
+    if (!product) return(
+        <div className="flex justify-center items-center h-screen">
+            <span className="animate-pulse text-gray-500">Загрузка...</span>
+        </div>
+    );
 
     return (
         <div className="min-h-screen bg-pink-100 flex flex-col">
