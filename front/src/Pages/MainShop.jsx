@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import api from '../shared/api.jsx';
 import {useNavigate} from "react-router-dom";
+import Auth from '../Features/Auth.jsx';
 
 
 function MainShop() {
@@ -8,6 +9,15 @@ function MainShop() {
     const [images, setImages] = useState({});
     const [error, setError] = useState(null);
     const navigate = useNavigate();
+    const [showAuth, setShowAuth] = useState(false);
+
+    const handleProfileClick = () => {
+        if (localStorage.getItem('accessToken')) {
+            navigate('/home');
+        } else {
+            setShowAuth(true);
+        }
+    };
 
     useEffect(() => {
         // Загружаем все товары
@@ -95,14 +105,14 @@ function MainShop() {
                 />
                 {/* Profile & Cart */}
                 <div className="hidden md:flex items-center gap-4">
-                    <button className="flex flex-col items-center text-white hover:text-purple-900">
+                    <button onClick={handleProfileClick} className="flex flex-col items-center text-white hover:text-purple-900">
                         <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="2" />
                             <path d="M6 20c0-2.21 3.58-4 8-4s8 1.79 8 4" stroke="currentColor" strokeWidth="2" />
                         </svg>
-                        <span className="text-xs">Войти</span>
+                        <span className="text-xs">{localStorage.getItem('accessToken') ? 'Профиль' : 'Войти'}</span>
                     </button>
-                    <button className="flex flex-col items-center text-white hover:text-purple-900">
+                    <button onClick={() => navigate("/CartPage")} className="flex flex-col items-center text-white hover:text-purple-900">
                         <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path d="M3 3h18l-1.68 13.39A2 2 0 0117.34 18H6.66a2 2 0 01-1.98-1.61L3 3z" stroke="currentColor" strokeWidth="2" />
                             <circle cx="9" cy="21" r="1" />
@@ -133,7 +143,12 @@ function MainShop() {
                         </div>
                     )}
 
-                    <p className="text-xl font-bold text-purple-700 mb-1">{parseFloat(product.price).toFixed(2)} ₽</p>
+                    <p className="text-xl font-bold text-purple-700 mb-1">{
+                        Number.isInteger(+product.price)
+                          ? Number(product.price)
+                          : (+product.price).toFixed(2)
+                        } ₽
+                    </p>
                     <p className="text-xl front-bold text-black mb-1">{product.name}</p>
                     <p className="text-gray-600 mb-1">{product.description}</p>
                 
@@ -164,15 +179,15 @@ function MainShop() {
                     </svg>
                 </button>
                 {/* Profile */}
-                <button className="flex flex-col items-center text-white hover:text-purple-900">
+                <button onClick={handleProfileClick} className="flex flex-col items-center text-white hover:text-purple-900">
                     <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="2" />
                         <path d="M6 20c0-2.21 3.58-4 8-4s8 1.79 8 4" stroke="currentColor" strokeWidth="2" />
                     </svg>
-                    <span className="text-xs">Войти</span>
+                    <span className="text-xs">{localStorage.getItem('accessToken') ? 'Профиль' : 'Войти'}</span>
                 </button>
                 {/* Cart */}
-                <button className="flex flex-col items-center text-white hover:text-purple-900">
+                <button onClick={() => navigate("/CartPage")} className="flex flex-col items-center text-white hover:text-purple-900">
                     <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M3 3h18l-1.68 13.39A2 2 0 0117.34 18H6.66a2 2 0 01-1.98-1.61L3 3z" stroke="currentColor" strokeWidth="2" />
                         <circle cx="9" cy="21" r="1" />
@@ -181,6 +196,12 @@ function MainShop() {
                     <span className="text-xs">Корзина</span>
                 </button>
             </footer>
+            {/* Auth Modal */}
+            {showAuth && (
+                <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+                    <Auth onClose={() => setShowAuth(false)} />
+                </div>
+            )}
     </div>
     );
 }
