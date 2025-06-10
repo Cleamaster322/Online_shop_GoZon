@@ -7,6 +7,7 @@ import MyProducts from "./Pages/MyProducts.jsx";
 import EditProduct from "./Pages/EditProduct.jsx";
 import CartPage from "./Pages/CartPage.jsx";
 import AuthPage from "./Pages/Auth.jsx";
+import SelectDeliveryPoint from "./Pages/SelectDeliveryPoint.jsx";
 
 function App() {
     return (
@@ -21,6 +22,7 @@ function App() {
                 <Route path="/my-products" element={<MyProducts />} />
                 <Route path="edit-product/:id" element={<EditProduct />} />
                 <Route path="/CartPage" element={<CartPage />} />
+                <Route path="/select-delivery" element={<SelectDeliveryPoint />} />
             </Routes>
         </>
     );
