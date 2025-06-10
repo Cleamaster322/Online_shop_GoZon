@@ -2,6 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {Minus, Plus, Heart, Trash2} from 'lucide-react';
 import {useNavigate, useSearchParams} from "react-router-dom";
 import api from '../shared/api.jsx';
+import SelectDeliveryPoint from './SelectDeliveryPoint';
 
 
 function CartPage() {
@@ -11,6 +12,8 @@ function CartPage() {
     const [liked, setLiked] = useState(() => new Set());  // id товаров, помеченных «сердцем»
     const [error, setError] = useState(null);
     const [userId, setUserId] = useState(null);
+    const [showDeliveryModal, setShowDeliveryModal] = useState(false);
+    const [deliveryPointName, setDeliveryPointName] = useState('');
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const isEmpty = cartItems.length === 0;
@@ -36,6 +39,18 @@ function CartPage() {
         }
     }, []);
 
+    useEffect(() => {
+        // Load delivery point name if it exists in localStorage
+        const pointId = localStorage.getItem('selectedDeliveryPoint');
+        if (pointId) {
+            api.get(`/api/deliverypoints/${pointId}/`)
+                .then(res => setDeliveryPointName(res.data.name))
+                .catch(err => {
+                    console.error('Error loading delivery point:', err);
+                    localStorage.removeItem('selectedDeliveryPoint');
+                });
+        }
+    }, []);
 
     useEffect(() => {
         if (!userId) return;
@@ -161,7 +176,7 @@ function CartPage() {
     const handleOrder = async () => {
         const pointId = localStorage.getItem('selectedDeliveryPoint');
         if (!pointId) {
-            alert('Сначала выберите пункт доставки!');
+            setShowDeliveryModal(true);
             return;
         }
 
@@ -172,7 +187,16 @@ function CartPage() {
                     user: userId,
                     product: item.product,
                     delivery_point: parseInt(pointId),
-                    status: 'processing'
+                    status: 'processing',
+                    quantity: item.quantity
+                });
+            }
+
+            /* 2. Уменьшаем stock товара */
+            for (const item of cartItems) {
+                const currentStock = products[item.product].stock;
+                await api.patch(`/api/products/${item.product}/update/`, {
+                    stock: Math.max(currentStock - item.quantity, 0)
                 });
             }
 
@@ -183,6 +207,8 @@ function CartPage() {
 
             // 3. Обновляем стейт
             setCartItems([]);
+            localStorage.removeItem('selectedDeliveryPoint');
+            setDeliveryPointName('');
             alert('✅ Заказ оформлен!');
         } catch (err) {
             console.error('Ошибка при заказе', err);
@@ -318,10 +344,25 @@ function CartPage() {
                     </div>
 
                     {/* Способ доставки */}
-                    <SectionCard title="Способ доставки">
-                        <button className="text-purple-600 hover:underline"
-                                onClick={() => navigate('/select-delivery')}>Выбрать адрес доставки
-                        </button>
+                    <SectionCard title="Адрес доставки">
+                        {deliveryPointName ? (
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-700">{deliveryPointName}</span>
+                                <button 
+                                    className="text-purple-600 hover:underline"
+                                    onClick={() => setShowDeliveryModal(true)}
+                                >
+                                    Изменить
+                                </button>
+                            </div>
+                        ) : (
+                            <button 
+                                className="text-purple-600 hover:underline"
+                                onClick={() => setShowDeliveryModal(true)}
+                            >
+                                Выбрать адрес доставки
+                            </button>
+                        )}
                     </SectionCard>
                     <SectionCard title="Способ оплаты">
                         <button className="text-purple-600 hover:underline">Выбрать способ оплаты</button>
@@ -331,10 +372,6 @@ function CartPage() {
                 {/* Правая часть: итог */}
                 <aside className="sticky top-28 self-start">
                     <div className="bg-white rounded-3xl shadow-md p-6 w-full xl:w-72">
-                        <button className="text-sm text-purple-600 hover:underline mb-3 text-left w-full"
-                                onClick={() => navigate('/select-delivery')}>
-                            Выбрать адрес доставки
-                        </button>
                         <p className="text-sm text-gray-500">Товаров, {cartItems.length} шт.</p>
                         <p className="text-3xl font-extrabold mt-2"> {formatPrice(total)} ₽</p>
                         <button disabled={isEmpty}
@@ -356,6 +393,15 @@ function CartPage() {
                     <span className="text-xs">{localStorage.getItem('accessToken') ? 'Профиль' : 'Войти'}</span>
                 </button>
             </footer>
+
+            {/* Delivery Modal */}
+            {showDeliveryModal && (
+                <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-2xl p-6 max-w-xl w-full mx-4">
+                        <SelectDeliveryPoint onClose={() => setShowDeliveryModal(false)} />
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

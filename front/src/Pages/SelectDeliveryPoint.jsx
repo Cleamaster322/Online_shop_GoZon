@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import api from '../shared/api.jsx';
 
-export default function SelectDeliveryPoint() {
-  const navigate = useNavigate();
+export default function SelectDeliveryPoint({ onClose }) {
   const [cities, setCities] = useState([]);
   const [points, setPoints] = useState([]);
   const [cityId, setCityId] = useState('');
@@ -32,52 +30,60 @@ export default function SelectDeliveryPoint() {
       return;
     }
     localStorage.setItem('selectedDeliveryPoint', pointId);
-    navigate('/CartPage');  // Назад в корзину
+    onClose();
   };
 
   return (
-    <div className="min-h-screen bg-[#fdefff] p-6 text-black">
-      <div className="max-w-xl mx-auto bg-white rounded-2xl shadow-lg p-6 space-y-4">
-        <h2 className="text-2xl font-bold text-purple-700 text-center">Выбор адреса доставки</h2>
-
-        {/* Города */}
-        <select
-          className="w-full px-4 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400"
-          value={cityId}
-          onChange={(e) => {
-            setCityId(e.target.value);
-            setPointId('');
-          }}
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-purple-700">Выбор адреса доставки</h2>
+        <button 
+          onClick={onClose}
+          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
         >
-          <option value="">Выберите город</option>
-          {cities.map(city => (
-            <option key={city.id} value={city.id}>{city.name}</option>
-          ))}
-        </select>
-
-        {/* Пункты */}
-        <select
-          className="w-full px-4 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400"
-          value={pointId}
-          onChange={(e) => setPointId(e.target.value)}
-          disabled={!cityId}
-        >
-          <option value="">Выберите пункт доставки</option>
-          {points.map(point => (
-            <option key={point.id} value={point.id}>{point.name}</option>
-          ))}
-        </select>
-
-        <button
-          onClick={handleSubmit}
-          className="w-full bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 rounded-lg transition"
-          disabled={!pointId}
-        >
-          ОК
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
         </button>
-
-        {error && <p className="text-center text-red-500">{error}</p>}
       </div>
+
+      {/* Города */}
+      <select
+        className="w-full px-4 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400"
+        value={cityId}
+        onChange={(e) => {
+          setCityId(e.target.value);
+          setPointId('');
+        }}
+      >
+        <option value="">Выберите город</option>
+        {cities.map(city => (
+          <option key={city.id} value={city.id}>{city.name}</option>
+        ))}
+      </select>
+
+      {/* Пункты */}
+      <select
+        className="w-full px-4 py-2 border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400"
+        value={pointId}
+        onChange={(e) => setPointId(e.target.value)}
+        disabled={!cityId}
+      >
+        <option value="">Выберите пункт доставки</option>
+        {points.map(point => (
+          <option key={point.id} value={point.id}>{point.name}</option>
+        ))}
+      </select>
+
+      <button
+        onClick={handleSubmit}
+        className="w-full bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 rounded-lg transition"
+        disabled={!pointId}
+      >
+        ОК
+      </button>
+
+      {error && <p className="text-center text-red-500">{error}</p>}
     </div>
   );
 }

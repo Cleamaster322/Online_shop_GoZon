@@ -85,7 +85,7 @@ function MainShop() {
         const searchQuery = searchParams.get('search')?.toLowerCase() || '';
         const categoryId = searchParams.get('category');
         
-        let filtered = products;
+        let filtered = products.filter(product => product.stock > 0);
         
         // Apply category filter
         if (categoryId) {
