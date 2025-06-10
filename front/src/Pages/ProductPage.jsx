@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useConfetti } from "../hooks/useConfetti";
 import api from "../shared/api.jsx";
 import Auth from "../Features/Auth.jsx";
 
@@ -19,6 +20,7 @@ function ProductPage() {
   const [selectedImgIdx, setSelectedImgIdx] = useState(0);
   const [showAuth, setShowAuth] = useState(false);
   const [error, setError] = useState(null);
+  const { shootAt } = useConfetti();
 
   /* ---------------- helpers ---------------- */
   const isAuth = () => Boolean(localStorage.getItem("accessToken"));
@@ -44,6 +46,7 @@ function ProductPage() {
     e.stopPropagation();
     if (!isAuth()) return setShowAuth(true);
     await addToCart(productId);
+    shootAt(e.currentTarget);
     if (goToCart) navigate("/CartPage");
   };
 
