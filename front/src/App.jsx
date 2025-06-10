@@ -8,6 +8,7 @@ import EditProduct from "./Pages/EditProduct.jsx";
 import CartPage from "./Pages/CartPage.jsx";
 import AuthPage from "./Pages/Auth.jsx";
 import SelectDeliveryPoint from "./Pages/SelectDeliveryPoint.jsx";
+import MyOrders from "./Pages/MyOrders.jsx";
 
 function App() {
     return (
@@ -23,6 +24,7 @@ function App() {
                 <Route path="edit-product/:id" element={<EditProduct />} />
                 <Route path="/CartPage" element={<CartPage />} />
                 <Route path="/select-delivery" element={<SelectDeliveryPoint />} />
+                <Route path="/MyOrders" element={<MyOrders />} />
             </Routes>
         </>
     );
