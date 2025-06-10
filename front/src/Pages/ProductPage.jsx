@@ -17,6 +17,8 @@ function ProductPage() {
   const [error, setError] = useState(null);
   const [cartItems, setCartItems] = useState([]);
   const { shootAt } = useConfetti();
+  const [isBurgerOpen, setIsBurgerOpen] = useState(false);
+  const [categories, setCategories] = useState([]);
 
   const [categoryName, setCategoryName] = useState("");
   const [sellerName, setSellerName]   = useState("");
@@ -25,6 +27,11 @@ function ProductPage() {
   const isAuth = () => Boolean(localStorage.getItem("accessToken"));
   const handleProfileClick = () => (isAuth() ? navigate("/home") : setShowAuth(true));
   const handleCartPageClick = () => (isAuth() ? navigate("/CartPage") : setShowAuth(true));
+
+  const handleCategoryClick = (categoryId) => {
+    navigate(`/Shop${categoryId ? `?category=${categoryId}` : ''}`);
+    setIsBurgerOpen(false);
+  };
 
   const loadCartItems = async () => {
     try {
@@ -91,6 +98,15 @@ function ProductPage() {
 
   /* ---------------- data ---------------- */
 useEffect(() => {
+  // Load categories
+  api.get('/api/categories/')
+    .then(res => {
+      setCategories(res.data);
+    })
+    .catch(err => {
+      console.error('Error loading categories:', err);
+    });
+
   (async () => {
     try {
       // 1) получаем сам товар
@@ -139,6 +155,11 @@ useEffect(() => {
         onProfile={handleProfileClick} 
         onCart={handleCartPageClick} 
         onSearch={handleSearch}
+        isBurgerOpen={isBurgerOpen}
+        setIsBurgerOpen={setIsBurgerOpen}
+        categories={categories}
+        handleCategoryClick={handleCategoryClick}
+        setSearchParams={setSearchParams}
       />
 
       {/** ---------- DESKTOP ---------- **/}
@@ -174,6 +195,11 @@ useEffect(() => {
         sellerName={sellerName}
         categoryName={categoryName}
         isInCart={cartItems.some(item => item.product === product.id)}
+        isBurgerOpen={isBurgerOpen}
+        setIsBurgerOpen={setIsBurgerOpen}
+        categories={categories}
+        handleCategoryClick={handleCategoryClick}
+        setSearchParams={setSearchParams}
       />
 
       {showAuth && (
@@ -189,12 +215,44 @@ useEffect(() => {
 /* --------------------------- SUB‑COMPONENTS --------------------------- */
 /* ===================================================================== */
 
-const Header = ({ isAuth, onProfile, onCart, onSearch }) => (
+const Header = ({ isAuth, onProfile, onCart, onSearch, isBurgerOpen, setIsBurgerOpen, categories, handleCategoryClick, setSearchParams }) => (
   <header className="bg-purple-300 rounded-xl flex items-center px-6 py-3 gap-4">
     <div className="flex items-center gap-4">
       <img src="/logo.jpg" alt="logo" className="w-14 h-14 rounded-full border-2 border-white" />
-      <span className="text-3xl font-bold text-white cursor-pointer" onClick={() => (window.location.href = "/Shop")}>GosZakaz</span>
+      <span className="text-3xl font-bold text-white cursor-pointer" onClick={() => navigate('/Shop')}>GosZakaz</span>
+      <button
+        className="p-2 rounded bg-purple-200 hover:bg-purple-400 md:flex hidden items-center"
+        onClick={() => setIsBurgerOpen(!isBurgerOpen)}
+      >
+        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
     </div>
+
+    {/* BURGER MENU FOR DESKTOP */}
+    {isBurgerOpen && (
+      <div className="hidden md:block absolute top-20 left-4 bg-white text-black rounded-xl shadow-lg p-4 z-50 min-w-[200px] animate-fade-in">
+        <h3 className="text-lg font-bold text-purple-700 mb-3">Категории</h3>
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={() => handleCategoryClick()}
+            className="text-left px-3 py-2 rounded-lg hover:bg-purple-100 transition-colors"
+          >
+            Все товары
+          </button>
+          {categories.map(category => (
+            <button
+              key={category.id}
+              onClick={() => handleCategoryClick(category.id)}
+              className="text-left px-3 py-2 rounded-lg hover:bg-purple-100 transition-colors"
+            >
+              {category.name}
+            </button>
+          ))}
+        </div>
+      </div>
+    )}
 
     <input
       type="text"
@@ -336,26 +394,17 @@ const MobileLayout = ({
   sellerName,
   categoryName,
   isInCart,
+  isBurgerOpen,
+  setIsBurgerOpen,
+  categories,
+  handleCategoryClick,
+  setSearchParams,
 }) => {
 
   return (
     <>
       {/* контент */}
       <div className="xl:hidden flex-1 w-full px-2 pt-4 pb-24 flex flex-col gap-4">
-        {/* Search bar for mobile */}
-        <div className="px-4 mb-4">
-          <input
-            type="text"
-            placeholder="Найти на GosZakaz"
-            className="w-full px-2 py-2 rounded bg-white text-gray-700 focus:outline-none"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                onSearch(e);
-              }
-            }}
-          />
-        </div>
-
         {/* карусель изображений */}
         <div className="flex overflow-x-auto gap-2">
           {images.map((img, idx) => (
@@ -394,19 +443,12 @@ const MobileLayout = ({
 
       {/* мобильный футер */}
       <footer className="xl:hidden fixed bottom-0 left-0 w-full bg-purple-300 flex justify-around items-center py-2 z-20">
-        <button className="p-2 rounded bg-purple-200 hover:bg-purple-400">
-          <svg
-            className="w-7 h-7 text-white"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 6h16M4 12h16M4 18h16"
-            />
+        <button 
+          className="p-2 rounded bg-purple-200 hover:bg-purple-400"
+          onClick={() => setIsBurgerOpen(!isBurgerOpen)}
+        >
+          <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
 
@@ -414,12 +456,7 @@ const MobileLayout = ({
           onClick={onProfile}
           className="flex flex-col items-center text-white hover:text-purple-900"
         >
-          <svg
-            className="w-7 h-7"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
+          <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <circle cx="12" cy="8" r="4" strokeWidth={2} />
             <path d="M6 20c0-2.21 3.58-4 8-4s8 1.79 8 4" strokeWidth={2} />
           </svg>
@@ -430,22 +467,50 @@ const MobileLayout = ({
           onClick={onCart}
           className="flex flex-col items-center text-white hover:text-purple-900"
         >
-          <svg
-            className="w-7 h-7"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              d="M3 3h18l-1.68 13.39A2 2 0 0117.34 18H6.66a2 2 0 01-1.98-1.61L3 3z"
-              strokeWidth={2}
-            />
+          <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path d="M3 3h18l-1.68 13.39A2 2 0 0117.34 18H6.66a2 2 0 01-1.98-1.61L3 3z" strokeWidth={2} />
             <circle cx="9" cy="21" r="1" />
             <circle cx="15" cy="21" r="1" />
           </svg>
           <span className="text-xs">Корзина</span>
         </button>
       </footer>
+
+      {/* Mobile Burger Menu */}
+      {isBurgerOpen && (
+        <div className="fixed inset-0 text-black bg-black/50 z-40 md:hidden">
+          <div className="absolute top-0 left-0 w-64 h-full bg-white p-4 animate-slide-in flex flex-col">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold text-purple-700">Категории</h3>
+              <button 
+                onClick={() => setIsBurgerOpen(false)}
+                className="p-2 hover:bg-purple-100 rounded-lg"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => handleCategoryClick()}
+                className="text-left px-3 py-2 rounded-lg hover:bg-purple-100 transition-colors"
+              >
+                Все товары
+              </button>
+              {categories.map(category => (
+                <button
+                  key={category.id}
+                  onClick={() => handleCategoryClick(category.id)}
+                  className="text-left px-3 py-2 rounded-lg hover:bg-purple-100 transition-colors"
+                >
+                  {category.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
