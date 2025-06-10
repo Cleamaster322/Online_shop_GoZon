@@ -9,6 +9,7 @@ function MainShop() {
     const [products, setProducts] = useState([]);
     const [images, setImages] = useState({});
     const [error, setError] = useState(null);
+    const [cartItems, setCartItems] = useState([]);
     const navigate = useNavigate();
     const [showAuth, setShowAuth] = useState(false);
     const { shootAt } = useConfetti();
@@ -20,14 +21,20 @@ function MainShop() {
             setShowAuth(true);
         }
     };
-    const handleCartAdd = (e, productId) => {
-      e.stopPropagation();                // чтобы не переходить на страницу товара
-      if (localStorage.getItem('accessToken')) {
-        addToCart(productId);
-        shootAt(e.currentTarget);// пользователь авторизован
-      } else {
-        setShowAuth(true);                // не авторизован → показываем модалку
-      }
+    const handleCartAdd = async (e, productId) => {
+        e.stopPropagation();
+        if (!localStorage.getItem('accessToken')) {
+            setShowAuth(true);
+            return;
+        }
+
+        const isInCart = cartItems.some(item => item.product === productId);
+        if (isInCart) {
+            await removeFromCart(productId);
+        } else {
+            await addToCart(productId);
+            shootAt(e.currentTarget);
+        }
     };
 
     const handleCartClick = () => {
@@ -64,39 +71,54 @@ function MainShop() {
                 console.error(err);
                 setError('Ошибка загрузки товаров');
             });
+
+        // Load cart items if user is authenticated
+        if (localStorage.getItem('accessToken')) {
+            loadCartItems();
+        }
     }, []);
+
+    const loadCartItems = async () => {
+        try {
+            const res = await api.get('/api/cartitems/');
+            setCartItems(res.data);
+        } catch (err) {
+            console.error('Error loading cart items:', err);
+        }
+    };
 
     const addToCart = async (productId) => {
         try {
             const token = localStorage.getItem('accessToken');
-            if (!token) return alert('Авторизуйтесь для добавления в корзину');
+            if (!token) return;
 
             const userId = JSON.parse(atob(token.split('.')[1])).user_id;
 
-            // Получаем текущие элементы корзины
-            const res = await api.get('/api/cartitems/');
-            const existing = res.data.find(item => item.user === userId && item.product === productId);
+            await api.post('/api/cartitems/create/', {
+                user: userId,
+                product: productId,
+                quantity: 1
+            });
 
-            if (existing) {
-                // Если уже есть — обновляем количество
-                await api.patch(`/api/cartitems/${existing.id}/update/`, {
-                    quantity: existing.quantity + 1
-                });
-            } else {
-                // Если нет — создаём новый
-                await api.post('/api/cartitems/create/', {
-                    user: userId,
-                    product: productId,
-                    quantity: 1
-                });
-            }
-
+            await loadCartItems();
         } catch (err) {
             console.error(err);
             alert('❌ Не удалось добавить в корзину');
         }
     };
 
+    const removeFromCart = async (productId) => {
+        try {
+            const cartItem = cartItems.find(item => item.product === productId);
+            if (cartItem) {
+                await api.delete(`/api/cartitems/${cartItem.id}/delete/`);
+                await loadCartItems();
+            }
+        } catch (err) {
+            console.error(err);
+            alert('❌ Не удалось удалить из корзины');
+        }
+    };
 
     if (error) return <div className="text-center text-red-500 mt-10">{error}</div>;
     if (products.length === 0) return (
@@ -176,14 +198,24 @@ function MainShop() {
                 
                     <button
                         onClick={e => handleCartAdd(e, product.id)}
-                        className="w-full bg-purple-400 hover:bg-purple-600 text-white font-semibold py-1 rounded transition"
+                        className={`w-full font-semibold py-1 rounded transition ${
+                            cartItems.some(item => item.product === product.id)
+                                ? 'bg-red-400 hover:bg-red-600'
+                                : 'bg-purple-400 hover:bg-purple-600'
+                        } text-white`}
                     >
-                        <svg className="inline w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path d="M3 3h18l-1.68 13.39A2 2 0 0117.34 18H6.66a2 2 0 01-1.98-1.61L3 3z" stroke="currentColor" strokeWidth="2" />
-                                <circle cx="9" cy="21" r="1" />
-                                <circle cx="15" cy="21" r="1" />
-                        </svg>
-                        В корзину
+                        {cartItems.some(item => item.product === product.id) ? (
+                            'Удалить из корзины'
+                        ) : (
+                            <>
+                                <svg className="inline w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path d="M3 3h18l-1.68 13.39A2 2 0 0117.34 18H6.66a2 2 0 01-1.98-1.61L3 3z" stroke="currentColor" strokeWidth="2" />
+                                    <circle cx="9" cy="21" r="1" />
+                                    <circle cx="15" cy="21" r="1" />
+                                </svg>
+                                В корзину
+                            </>
+                        )}
                     </button>
                 </div>
             ))}
