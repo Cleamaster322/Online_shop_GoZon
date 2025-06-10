@@ -120,7 +120,9 @@ useEffect(() => {
       </div>
     );
 
-  const price = Number.parseFloat(product.price).toFixed(0);
+  const price = Number.isInteger(+product.price)
+    ? Number(product.price)
+    : (+product.price).toFixed(2);
 
   return (
     <div className="min-h-screen bg-[#fdefff] flex flex-col">

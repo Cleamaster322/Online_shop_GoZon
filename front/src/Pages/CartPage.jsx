@@ -144,6 +144,12 @@ function CartPage() {
       return product ? acc + product.price * item.quantity : acc;
     }, 0);
 
+    const formatPrice = (price) => {
+      return Number.isInteger(+price)
+        ? Number(price)
+        : (+price).toFixed(2);
+    };
+
     if (error) return <div className="text-center text-red-500 mt-10">{error}</div>;
 
     return (
@@ -223,7 +229,7 @@ function CartPage() {
                                   </IconButton>
                                 </div>
                                 <p className="font-bold whitespace-nowrap text-black">
-                                  {product.price * item.quantity} ₽
+                                  {formatPrice(product.price * item.quantity)} ₽
                                 </p>
                               </div>
 
@@ -280,7 +286,7 @@ function CartPage() {
                   Выбрать адрес доставки
                 </button>
                 <p className="text-sm text-gray-500">Товаров, {cartItems.length} шт.</p>
-                <p className="text-3xl font-extrabold mt-2"> {total.toFixed(2)} ₽</p>
+                <p className="text-3xl font-extrabold mt-2"> {formatPrice(total)} ₽</p>
                 <button disabled={isEmpty}
                         className={`mt-6 w-full rounded-xl py-2 font-semibold transition ${isEmpty ? 'bg-gray-300 cursor-not-allowed text-white' : 'bg-purple-500 hover:bg-purple-600 text-white'}`}>
                   Заказать

@@ -57,6 +57,7 @@ export default function TestUpload() {
       setMessage({ type: "success", text: "✅ Товар успешно создан!" });
       setForm({ name: "", description: "", price: "", stock: "", category: "" });
       setImage(null);
+      navigate("/my-products")
     } catch (err) {
       console.error(err);
       setMessage({ type: "error", text: "❌ Ошибка при создании товара" });

@@ -52,6 +52,7 @@ export default function EditProduct() {
         category: parseInt(form.category),
       });
       setMessage({ type: "success", text: "✅ Товар обновлён" });
+      navigate(`/product/${id}`);
     } catch (err) {
       console.error(err);
       setMessage({ type: "error", text: "❌ Ошибка при обновлении" });

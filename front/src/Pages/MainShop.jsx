@@ -173,7 +173,7 @@ function MainShop() {
                 <div
                     key={product.id}
                     onClick={() => navigate(`/product/${product.id}`)}
-                    className="bg=white rounded-xl shadow-lg p-4 w-full max-w-xs cursor-pointer hover:shadow-2xl transition-shadow duration-300"
+                    className="bg=white rounded-xl shadow-lg p-4 w-full max-w-xs cursor-pointer hover:shadow-2xl transition-shadow duration-300 flex flex-col"
                 >
                     {images[product.id] ? (
                         <img
@@ -187,18 +187,20 @@ function MainShop() {
                         </div>
                     )}
 
-                    <p className="text-xl font-bold text-purple-700 mb-1">{
-                        Number.isInteger(+product.price)
-                          ? Number(product.price)
-                          : (+product.price).toFixed(2)
-                        } ₽
-                    </p>
-                    <p className="text-xl front-bold text-black mb-1">{product.name}</p>
-                    <p className="text-gray-600 mb-1">{product.description}</p>
+                    <div className="flex-grow">
+                        <p className="text-xl font-bold text-purple-700 mb-1">{
+                            Number.isInteger(+product.price)
+                              ? Number(product.price)
+                              : (+product.price).toFixed(2)
+                            } ₽
+                        </p>
+                        <p className="text-xl front-bold text-black mb-1">{product.name}</p>
+                        <p className="text-gray-600 mb-1">{product.description}</p>
+                    </div>
                 
                     <button
                         onClick={e => handleCartAdd(e, product.id)}
-                        className={`w-full font-semibold py-1 rounded transition ${
+                        className={`w-full font-semibold py-1 rounded transition mt-auto ${
                             cartItems.some(item => item.product === product.id)
                                 ? 'bg-red-400 hover:bg-red-600'
                                 : 'bg-purple-400 hover:bg-purple-600'
