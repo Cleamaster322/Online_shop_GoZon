@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useConfetti } from "../hooks/useConfetti";
 import api from "../shared/api.jsx";
 import Auth from "../Features/Auth.jsx";
@@ -8,6 +8,7 @@ import Auth from "../Features/Auth.jsx";
 function ProductPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [product, setProduct] = useState(null);
   const [images, setImages] = useState([]);
@@ -81,6 +82,13 @@ function ProductPage() {
     }
   };
 
+  const handleSearch = (e) => {
+    const searchQuery = e.target.value;
+    if (searchQuery) {
+      navigate(`/Shop?search=${encodeURIComponent(searchQuery)}`);
+    }
+  };
+
   /* ---------------- data ---------------- */
 useEffect(() => {
   (async () => {
@@ -126,7 +134,12 @@ useEffect(() => {
 
   return (
     <div className="min-h-screen bg-[#fdefff] flex flex-col">
-      <Header isAuth={isAuth} onProfile={handleProfileClick} onCart={handleCartPageClick} />
+      <Header 
+        isAuth={isAuth} 
+        onProfile={handleProfileClick} 
+        onCart={handleCartPageClick} 
+        onSearch={handleSearch}
+      />
 
       {/** ---------- DESKTOP ---------- **/}
       <main className="hidden xl:grid grid-cols-12 gap-8 max-w-7xl mx-auto w-full flex-1 py-8 px-8">
@@ -157,6 +170,7 @@ useEffect(() => {
         onAdd={handleCartAdd}
         onProfile={handleProfileClick}
         onCart={handleCartPageClick}
+        onSearch={handleSearch}
         sellerName={sellerName}
         categoryName={categoryName}
         isInCart={cartItems.some(item => item.product === product.id)}
@@ -175,17 +189,22 @@ useEffect(() => {
 /* --------------------------- SUB‑COMPONENTS --------------------------- */
 /* ===================================================================== */
 
-const Header = ({ isAuth, onProfile, onCart }) => (
+const Header = ({ isAuth, onProfile, onCart, onSearch }) => (
   <header className="bg-purple-300 rounded-xl flex items-center px-6 py-3 gap-4">
     <div className="flex items-center gap-4">
       <img src="/logo.jpg" alt="logo" className="w-14 h-14 rounded-full border-2 border-white" />
-      <span className="text-3xl font-bold text-white cursor-pointer" onClick={() => (window.location.href = "/")}>GosZakaz</span>
+      <span className="text-3xl font-bold text-white cursor-pointer" onClick={() => (window.location.href = "/Shop")}>GosZakaz</span>
     </div>
 
     <input
       type="text"
       placeholder="Найти на GosZakaz"
       className="flex-1 min-w-0 px-2 py-2 rounded bg-white text-gray-700 focus:outline-none mx-4"
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          onSearch(e);
+        }
+      }}
     />
 
     <div className="hidden lg:flex items-center gap-4">
@@ -313,6 +332,7 @@ const MobileLayout = ({
   onAdd,
   onProfile,
   onCart,
+  onSearch,
   sellerName,
   categoryName,
   isInCart,
@@ -322,6 +342,20 @@ const MobileLayout = ({
     <>
       {/* контент */}
       <div className="xl:hidden flex-1 w-full px-2 pt-4 pb-24 flex flex-col gap-4">
+        {/* Search bar for mobile */}
+        <div className="px-4 mb-4">
+          <input
+            type="text"
+            placeholder="Найти на GosZakaz"
+            className="w-full px-2 py-2 rounded bg-white text-gray-700 focus:outline-none"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                onSearch(e);
+              }
+            }}
+          />
+        </div>
+
         {/* карусель изображений */}
         <div className="flex overflow-x-auto gap-2">
           {images.map((img, idx) => (
