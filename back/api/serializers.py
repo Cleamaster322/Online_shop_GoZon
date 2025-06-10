@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import City, User, Category, Product, CartItem, Delivery, ProductImage
+from .models import City, User, Category, Product, CartItem, Delivery, ProductImage,DeliveryPoint
 from django.contrib.auth.hashers import make_password
 
 
@@ -7,6 +7,12 @@ class CitySerializer(serializers.ModelSerializer):
     class Meta:
         model = City
         fields = ['id', 'name']
+
+
+class DeliveryPointSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DeliveryPoint
+        fields = '__all__'
 
 
 class UserSerializer(serializers.ModelSerializer):

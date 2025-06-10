@@ -28,6 +28,13 @@ urlpatterns = [
     path('cities/<int:pk>/update/', update_city),
     path('cities/<int:pk>/delete/', delete_city),
 
+    # --- DeliveryPoint ---
+    path('api/deliverypoints/', get_all_delivery_points),
+    path('api/deliverypoints/<int:pk>/', get_delivery_point),
+    path('api/deliverypoints/create/', post_delivery_point),
+    path('api/deliverypoints/<int:pk>/update/', update_delivery_point),
+    path('api/deliverypoints/<int:pk>/delete/', delete_delivery_point),
+
     # --- USER FUNCTIONS ---
     path('users/', get_all_users),
     path('users/<int:pk>/', get_user),

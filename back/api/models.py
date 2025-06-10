@@ -14,6 +14,13 @@ class City(models.Model):
     def __str__(self):
         return self.name
 
+class DeliveryPoint(models.Model):
+    city = models.ForeignKey(City, on_delete=models.CASCADE)
+    name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return f"{self.name} ({self.city.name})"
+
 
 class UserManager(BaseUserManager):
     def create_user(self, username, email, password=None, **extra_fields):
