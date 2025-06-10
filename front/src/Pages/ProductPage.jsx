@@ -14,6 +14,7 @@ function ProductPage() {
   const [selectedImgIdx, setSelectedImgIdx] = useState(0);
   const [showAuth, setShowAuth] = useState(false);
   const [error, setError] = useState(null);
+  const [cartItems, setCartItems] = useState([]);
   const { shootAt } = useConfetti();
 
   const [categoryName, setCategoryName] = useState("");
@@ -24,26 +25,54 @@ function ProductPage() {
   const handleProfileClick = () => (isAuth() ? navigate("/home") : setShowAuth(true));
   const handleCartPageClick = () => (isAuth() ? navigate("/CartPage") : setShowAuth(true));
 
+  const loadCartItems = async () => {
+    try {
+      const res = await api.get('/api/cartitems/');
+      setCartItems(res.data);
+    } catch (err) {
+      console.error('Error loading cart items:', err);
+    }
+  };
+
   const addToCart = async (productId) => {
-    const token = localStorage.getItem("accessToken");
-    if (!token) return;
-    const userId = JSON.parse(atob(token.split(".")[1])).user_id;
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) return;
 
-    const { data } = await api.get("/api/cartitems/");
-    const existing = data.find((i) => i.user === userId && i.product === productId);
-
-    if (existing) {
-      await api.patch(`/api/cartitems/${existing.id}/update/`, { quantity: existing.quantity + 1 });
-    } else {
+      const userId = JSON.parse(atob(token.split(".")[1])).user_id;
       await api.post("/api/cartitems/create/", { user: userId, product: productId, quantity: 1 });
+      await loadCartItems();
+    } catch (err) {
+      console.error(err);
+      alert('❌ Не удалось добавить в корзину');
+    }
+  };
+
+  const removeFromCart = async (productId) => {
+    try {
+      const cartItem = cartItems.find(item => item.product === productId);
+      if (cartItem) {
+        await api.delete(`/api/cartitems/${cartItem.id}/delete/`);
+        await loadCartItems();
+      }
+    } catch (err) {
+      console.error(err);
+      alert('❌ Не удалось удалить из корзины');
     }
   };
 
   const handleCartAdd = async (e, productId, goToCart = false) => {
     e.stopPropagation();
     if (!isAuth()) return setShowAuth(true);
-    await addToCart(productId);
-    shootAt(e.currentTarget);
+
+    const isInCart = cartItems.some(item => item.product === productId);
+    if (isInCart) {
+      await removeFromCart(productId);
+    } else {
+      await addToCart(productId);
+      shootAt(e.currentTarget);
+    }
+
     if (goToCart) navigate("/CartPage");
   };
 
@@ -65,6 +94,11 @@ useEffect(() => {
       setImages(imgRes.data);
       setCategoryName(catRes.data.name);                    // или другое поле, какое вернёт ваш эндпоинт
       setSellerName(sellerRes.data.username ?? sellerRes.data.full_name);
+
+      // Load cart items if user is authenticated
+      if (isAuth()) {
+        await loadCartItems();
+      }
     } catch (e) {
       console.error(e);
       setError("Ошибка загрузки товара");
@@ -102,6 +136,7 @@ useEffect(() => {
           price={price}
           onAdd={(e) => handleCartAdd(e, product.id)}
           onBuy={(e) => handleCartAdd(e, product.id, true)}
+          isInCart={cartItems.some(item => item.product === product.id)}
         />
       </main>
 
@@ -117,6 +152,7 @@ useEffect(() => {
         onCart={handleCartPageClick}
         sellerName={sellerName}
         categoryName={categoryName}
+        isInCart={cartItems.some(item => item.product === product.id)}
       />
 
       {showAuth && (
@@ -233,7 +269,7 @@ const SpecsAndDescription = ({ product , sellerName, categoryName}) => (
 );
 
 /* ---------- PRICE CARD ---------- */
-const PriceCard = ({ price, onAdd, onBuy }) => (
+const PriceCard = ({ price, onAdd, onBuy, isInCart }) => (
   <aside className="col-span-2 sticky top-24 self-start">
     <div className="bg-white rounded-3xl shadow-md p-10 xl:w-80 flex flex-col items-center">
       <div className="text-5xl font-extrabold text-purple-600 mb-8">
@@ -242,9 +278,13 @@ const PriceCard = ({ price, onAdd, onBuy }) => (
 
       <button
         onClick={onAdd}
-        className="w-full bg-purple-500 hover:bg-purple-600 text-white font-semibold py-3 rounded-xl transition mb-4"
+        className={`w-full font-semibold py-3 rounded-xl transition mb-4 ${
+          isInCart
+            ? 'bg-red-400 hover:bg-red-600'
+            : 'bg-purple-500 hover:bg-purple-600'
+        } text-white`}
       >
-        В корзину
+        {isInCart ? 'Удалить из корзины' : 'В корзину'}
       </button>
       <button
         onClick={onBuy}
@@ -268,6 +308,7 @@ const MobileLayout = ({
   onCart,
   sellerName,
   categoryName,
+  isInCart,
 }) => {
 
   return (
@@ -300,9 +341,13 @@ const MobileLayout = ({
       <div className="xl:hidden fixed bottom-16 left-0 w-full px-4 z-30">
         <button
           onClick={(e) => onAdd(e, product.id)}
-          className="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 rounded-xl shadow-lg text-lg"
+          className={`w-full font-bold py-3 rounded-xl shadow-lg text-lg ${
+            isInCart
+              ? 'bg-red-400 hover:bg-red-600'
+              : 'bg-purple-500 hover:bg-purple-600'
+          } text-white`}
         >
-          В корзину
+          {isInCart ? 'Удалить из корзины' : 'В корзину'}
         </button>
       </div>
 
