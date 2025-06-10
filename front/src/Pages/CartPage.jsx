@@ -158,6 +158,39 @@ function CartPage() {
         }
     };
 
+    const handleOrder = async () => {
+        const pointId = localStorage.getItem('selectedDeliveryPoint');
+        if (!pointId) {
+            alert('Сначала выберите пункт доставки!');
+            return;
+        }
+
+        try {
+            // 1. Создаём записи доставки
+            for (const item of cartItems) {
+                await api.post('/api/deliveries/create/', {
+                    user: userId,
+                    product: item.product,
+                    delivery_point: parseInt(pointId),
+                    status: 'processing'
+                });
+            }
+
+            // 2. Удаляем корзину
+            for (const item of cartItems) {
+                await api.delete(`/api/cartitems/${item.id}/delete/`);
+            }
+
+            // 3. Обновляем стейт
+            setCartItems([]);
+            alert('✅ Заказ оформлен!');
+        } catch (err) {
+            console.error('Ошибка при заказе', err);
+            alert('❌ Не удалось оформить заказ');
+        }
+    };
+
+
     if (error) return <div className="text-center text-red-500 mt-10">{error}</div>;
 
     return (
@@ -305,6 +338,7 @@ function CartPage() {
                         <p className="text-sm text-gray-500">Товаров, {cartItems.length} шт.</p>
                         <p className="text-3xl font-extrabold mt-2"> {formatPrice(total)} ₽</p>
                         <button disabled={isEmpty}
+                                onClick={handleOrder}
                                 className={`mt-6 w-full rounded-xl py-2 font-semibold transition ${isEmpty ? 'bg-gray-300 cursor-not-allowed text-white' : 'bg-purple-500 hover:bg-purple-600 text-white'}`}>
                             Заказать
                         </button>

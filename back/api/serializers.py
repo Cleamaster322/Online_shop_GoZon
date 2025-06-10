@@ -60,12 +60,10 @@ class CartItemSerializer(serializers.ModelSerializer):
 
 
 class DeliverySerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
-    product = ProductSerializer(read_only=True)
 
     class Meta:
         model = Delivery
-        fields = ['id', 'user', 'product', 'status']
+        fields = ['id', 'user', 'product', 'status','delivery_point', 'added_at']
 
 
 class ProductImageSerializer(serializers.ModelSerializer):

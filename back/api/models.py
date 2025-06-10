@@ -107,6 +107,7 @@ class Delivery(models.Model):
     delivery_point = models.ForeignKey(DeliveryPoint,on_delete=models.CASCADE,null=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    added_at = models.DateTimeField(auto_now_add=True,null=True)
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='new')
 
