@@ -67,13 +67,18 @@ function ProductPage() {
 
     const isInCart = cartItems.some(item => item.product === productId);
     if (isInCart) {
-      await removeFromCart(productId);
+      if (goToCart) {
+        navigate("/CartPage");
+      } else {
+        await removeFromCart(productId);
+      }
     } else {
       await addToCart(productId);
       shootAt(e.currentTarget);
+      if (goToCart) {
+        navigate("/CartPage");
+      }
     }
-
-    if (goToCart) navigate("/CartPage");
   };
 
   /* ---------------- data ---------------- */
@@ -290,7 +295,7 @@ const PriceCard = ({ price, onAdd, onBuy, isInCart }) => (
         onClick={onBuy}
         className="w-full bg-purple-300 hover:bg-purple-400 text-purple-700 font-semibold py-3 rounded-xl transition"
       >
-        Купить сейчас
+        {isInCart ? 'Перейти в корзину' : 'Купить сейчас'}
       </button>
     </div>
   </aside>
