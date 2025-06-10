@@ -172,16 +172,7 @@ function CartPage() {
                     user: userId,
                     product: item.product,
                     delivery_point: parseInt(pointId),
-                    status: 'processing',
-                    quantity: item.quantity
-                });
-            }
-
-            /* 2. Уменьшаем stock товара */
-            for (const item of cartItems) {
-                const currentStock = products[item.product].stock;
-                await api.patch(`/api/products/${item.product}/update/`, {
-                    stock: Math.max(currentStock - item.quantity, 0)
+                    status: 'processing'
                 });
             }
 

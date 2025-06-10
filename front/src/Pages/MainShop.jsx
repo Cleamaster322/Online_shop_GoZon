@@ -12,6 +12,8 @@ function MainShop() {
     const [error, setError] = useState(null);
     const [cartItems, setCartItems] = useState([]);
     const [searchParams, setSearchParams] = useSearchParams();
+    const [categories, setCategories] = useState([]);
+    const [isBurgerOpen, setIsBurgerOpen] = useState(false);
     const navigate = useNavigate();
     const [showAuth, setShowAuth] = useState(false);
     const { shootAt } = useConfetti();
@@ -33,12 +35,71 @@ function MainShop() {
         }
     };
 
+    const handleCategoryClick = (categoryId) => {
+        setSearchParams({ category: categoryId });
+        setIsBurgerOpen(false);
+    };
+
+    useEffect(() => {
+        // Load categories
+        api.get('/api/categories/')
+            .then(res => {
+                setCategories(res.data);
+            })
+            .catch(err => {
+                console.error('Error loading categories:', err);
+            });
+
+        // Load products
+        api.get('/api/products/')
+            .then(async res => {
+                const productList = res.data;
+                setProducts(productList);
+
+                // Load images for each product
+                const imageMap = {};
+                for (let product of productList) {
+                    try {
+                        const res = await api.get(`/api/productimages/?product=${product.id}`);
+                        if (res.data.length > 0) {
+                            imageMap[product.id] = res.data[0].image_url;
+                        }
+                    } catch (err) {
+                        console.error(`Не удалось загрузить изображение для товара ${product.id}`);
+                    }
+                }
+                setImages(imageMap);
+            })
+            .catch(err => {
+                console.error(err);
+                setError('Ошибка загрузки товаров');
+            });
+
+        // Load cart items if user is authenticated
+        if (localStorage.getItem('accessToken')) {
+            loadCartItems();
+        }
+    }, []);
+
     useEffect(() => {
         const searchQuery = searchParams.get('search')?.toLowerCase() || '';
-        const filtered = products.filter(product => 
-            product.name.toLowerCase().includes(searchQuery) ||
-            product.description.toLowerCase().includes(searchQuery)
-        );
+        const categoryId = searchParams.get('category');
+        
+        let filtered = products;
+        
+        // Apply category filter
+        if (categoryId) {
+            filtered = filtered.filter(product => product.category === parseInt(categoryId));
+        }
+        
+        // Apply search filter
+        if (searchQuery) {
+            filtered = filtered.filter(product => 
+                product.name.toLowerCase().includes(searchQuery) ||
+                product.description.toLowerCase().includes(searchQuery)
+            );
+        }
+        
         setFilteredProducts(filtered);
     }, [searchParams, products]);
 
@@ -156,12 +217,43 @@ function MainShop() {
                 <div className="flex items-center gap-4">
                     <img src="./public/logo.jpg" alt="GosZakaz logo" className="w-14 h-14 rounded-full border-2 border-white" />
                     <span className="text-3xl font-bold text-white cursor-pointer" onClick={() => navigate('/Shop')}>GosZakaz</span>
-                    <button className="p-2 rounded bg-purple-200 hover:bg-purple-400 hidden md:flex items-center">
+                    <button
+                          className="p-2 rounded bg-purple-200 hover:bg-purple-400 md:flex hidden items-center"
+                          onClick={() => setIsBurgerOpen(!isBurgerOpen)}
+                        >
                         <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                         </svg>
                     </button>
                 </div>
+
+                {/* BURGER MENU FOR DESKTOP */}
+                {isBurgerOpen && (
+                  <div className="hidden md:block absolute top-20 left-4 bg-white text-black rounded-xl shadow-lg p-4 z-50 min-w-[200px] animate-fade-in">
+                    <h3 className="text-lg font-bold text-purple-700 mb-3">Категории</h3>
+                    <div className="flex flex-col gap-2">
+                      <button
+                        onClick={() => {
+                          setSearchParams({});
+                          setIsBurgerOpen(false);
+                        }}
+                        className="text-left px-3 py-2 rounded-lg hover:bg-purple-100 transition-colors"
+                      >
+                        Все товары
+                      </button>
+                      {categories.map(category => (
+                        <button
+                          key={category.id}
+                          onClick={() => handleCategoryClick(category.id)}
+                          className="text-left px-3 py-2 rounded-lg hover:bg-purple-100 transition-colors"
+                        >
+                          {category.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Search bar */}
                 <input
                     type="text"
@@ -194,7 +286,7 @@ function MainShop() {
         <main className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 py-6 justify-items-center">
             {filteredProducts.length === 0 ? (
                 <div className="col-span-full text-center text-gray-500 mt-10 animate-fade-in">
-                    {searchParams.get('search') ? 'Товары не найдены' : 'Загрузка...'}
+                    {searchParams.get('search') || searchParams.get('category') ? 'Товары не найдены' : 'Загрузка...'}
                 </div>
             ) : (
                 filteredProducts.map((product, index) => (
@@ -268,14 +360,30 @@ function MainShop() {
                 }
             }
 
+            @keyframes slideIn {
+                from {
+                    transform: translateX(-100%);
+                }
+                to {
+                    transform: translateX(0);
+                }
+            }
+
             .animate-fade-in {
                 animation: fadeInUp 0.5s ease forwards;
+            }
+
+            .animate-slide-in {
+                animation: slideIn 0.3s ease forwards;
             }
         `}</style>
         {/* Mobile Footer */}
         <footer className="fixed bottom-0 left-0 w-full bg-purple-300 flex md:hidden justify-around items-center py-2 z-50">
                 {/* Burger */}
-                <button className="p-2 rounded bg-purple-200 hover:bg-purple-400">
+                <button 
+                    className="p-2 rounded bg-purple-200 hover:bg-purple-400"
+                    onClick={() => setIsBurgerOpen(!isBurgerOpen)}
+                >
                     <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
@@ -298,6 +406,44 @@ function MainShop() {
                     <span className="text-xs">Корзина</span>
                 </button>
             </footer>
+            {/* Mobile Burger Menu */}
+            {isBurgerOpen && (
+                <div className="fixed inset-0 text-black bg-black/50 z-40 md:hidden">
+                    <div className="absolute top-0 left-0 w-64 h-full bg-white p-4 animate-slide-in flex flex-col">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-bold text-purple-700">Категории</h3>
+                            <button 
+                                onClick={() => setIsBurgerOpen(false)}
+                                className="p-2 hover:bg-purple-100 rounded-lg"
+                            >
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <button
+                                onClick={() => {
+                                    setSearchParams({});
+                                    setIsBurgerOpen(false);
+                                }}
+                                className="text-left px-3 py-2 rounded-lg hover:bg-purple-100 transition-colors"
+                            >
+                                Все товары
+                            </button>
+                            {categories.map(category => (
+                                <button
+                                    key={category.id}
+                                    onClick={() => handleCategoryClick(category.id)}
+                                    className="text-left px-3 py-2 rounded-lg hover:bg-purple-100 transition-colors"
+                                >
+                                    {category.name}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
             {/* Auth Modal */}
             {showAuth && (
                 <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
