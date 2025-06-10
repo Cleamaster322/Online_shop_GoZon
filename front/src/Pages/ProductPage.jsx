@@ -5,12 +5,14 @@ import Auth from '../Features/Auth.jsx';
 
 function ProductPage() {
     const {id} = useParams();
+
     const [product, setProduct] = useState(null);
     const [images, setImages] = useState([]);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
     const [showAuth, setShowAuth] = useState(false);
     const [selectedImgIdx, setSelectedImgIdx] = useState(0);
+
 
     const handleProfileClick = () => {
         if (localStorage.getItem('accessToken')) {
@@ -106,12 +108,12 @@ function ProductPage() {
     );
 
     return (
-        <div className="min-h-screen bg-pink-100 flex flex-col">
+        <div className="min-h-screen bg-[#fdefff] flex flex-col">
             {/* Header */}
-            <header className="bg-purple-300 flex items-center px-6 py-3 rounded-xl gap-4 mt-2 mx-2">
+            <header className="bg-purple-300 flex items-center px-6 py-3 rounded-xl gap-4">
                 <div className="flex items-center gap-4">
                     <img src="/logo.jpg" alt="GosZakaz logo" className="w-14 h-14 rounded-full border-2 border-white" />
-                    <span className="text-3xl font-bold text-white cursor-pointer" onClick={() => navigate('/Shop')}>GosZakaz</span>
+                    <span className="text-3xl font-bold text-white cursor-pointer" onClick={() => navigate('/')}>GosZakaz</span>
                 </div>
                 <input
                     type="text"

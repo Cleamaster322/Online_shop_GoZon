@@ -104,7 +104,7 @@ function MainShop() {
         );
 
     return (
-        <div className="min-h-screen bg-purple-50"> 
+        <div className="min-h-screen bg-[#fdefff]">
             {/* Header */}
             <header className="bg-purple-300 flex items-center px-6 py-3 rounded-xl gap-4">
                 {/* Left group: logo, brand, burger */}
