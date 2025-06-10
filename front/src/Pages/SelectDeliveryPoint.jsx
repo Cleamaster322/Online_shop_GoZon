@@ -31,8 +31,7 @@ export default function SelectDeliveryPoint() {
       alert('Выберите пункт доставки');
       return;
     }
-    // Здесь ты можешь сохранить pointId в localStorage, context, или отправить на сервер
-    console.log('Выбран пункт:', pointId);
+    localStorage.setItem('selectedDeliveryPoint', pointId);
     navigate('/CartPage');  // Назад в корзину
   };
 
