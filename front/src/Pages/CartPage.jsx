@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {Minus, Plus, Heart, Trash2} from 'lucide-react';
-import {useNavigate} from "react-router-dom";
+import {useNavigate, useSearchParams} from "react-router-dom";
 import api from '../shared/api.jsx';
 
 
@@ -12,6 +12,7 @@ function CartPage() {
     const [error, setError] = useState(null);
     const [userId, setUserId] = useState(null);
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const isEmpty = cartItems.length === 0;
 
     const handleProfileClick = () => {
@@ -150,6 +151,13 @@ function CartPage() {
             : (+price).toFixed(2);
     };
 
+    const handleSearch = (e) => {
+        const searchQuery = e.target.value;
+        if (searchQuery) {
+            navigate(`/Shop?search=${encodeURIComponent(searchQuery)}`);
+        }
+    };
+
     if (error) return <div className="text-center text-red-500 mt-10">{error}</div>;
 
     return (
@@ -159,12 +167,17 @@ function CartPage() {
                 <div className="flex items-center gap-4">
                     <img src="/logo.jpg" alt="GosZakaz logo" className="w-14 h-14 rounded-full border-2 border-white"/>
                     <span className="text-3xl font-bold text-white cursor-pointer"
-                          onClick={() => navigate('/')}>GosZakaz</span>
+                          onClick={() => navigate('/Shop')}>GosZakaz</span>
                 </div>
                 <input
                     type="text"
                     placeholder="Найти на GosZakaz"
                     className="flex-1 min-w-0 px-2 py-2 rounded bg-white text-gray-700 focus:outline-none mx-4"
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                            handleSearch(e);
+                        }
+                    }}
                 />
                 <div className="hidden md:flex items-center gap-4">
                     <button onClick={handleProfileClick}

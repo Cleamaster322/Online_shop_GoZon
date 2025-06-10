@@ -1,15 +1,17 @@
 import React, {useEffect, useState} from 'react';
 import api from '../shared/api.jsx';
-import {useNavigate} from "react-router-dom";
+import {useNavigate, useSearchParams} from "react-router-dom";
 import { useConfetti } from "../hooks/useConfetti";
 import Auth from '../Features/Auth.jsx';
 
 
 function MainShop() {
     const [products, setProducts] = useState([]);
+    const [filteredProducts, setFilteredProducts] = useState([]);
     const [images, setImages] = useState({});
     const [error, setError] = useState(null);
     const [cartItems, setCartItems] = useState([]);
+    const [searchParams, setSearchParams] = useSearchParams();
     const navigate = useNavigate();
     const [showAuth, setShowAuth] = useState(false);
     const { shootAt } = useConfetti();
@@ -21,6 +23,25 @@ function MainShop() {
             setShowAuth(true);
         }
     };
+
+    const handleSearch = (e) => {
+        const searchQuery = e.target.value;
+        if (searchQuery) {
+            setSearchParams({ search: searchQuery });
+        } else {
+            setSearchParams({});
+        }
+    };
+
+    useEffect(() => {
+        const searchQuery = searchParams.get('search')?.toLowerCase() || '';
+        const filtered = products.filter(product => 
+            product.name.toLowerCase().includes(searchQuery) ||
+            product.description.toLowerCase().includes(searchQuery)
+        );
+        setFilteredProducts(filtered);
+    }, [searchParams, products]);
+
     const handleCartAdd = async (e, productId) => {
         e.stopPropagation();
         if (!localStorage.getItem('accessToken')) {
@@ -146,6 +167,8 @@ function MainShop() {
                     type="text"
                     placeholder="Найти на GosZakaz"
                     className="flex-1 min-w-0 px-2 py-2 rounded bg-white text-gray-700 focus:outline-none mx-4"
+                    value={searchParams.get('search') || ''}
+                    onChange={handleSearch}
                 />
                 {/* Profile & Cart */}
                 <div className="hidden md:flex items-center gap-4">
@@ -169,59 +192,86 @@ function MainShop() {
 
         {/* Product grid */}
         <main className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 py-6 justify-items-center">
-            {products.map(product => (
-                <div
-                    key={product.id}
-                    onClick={() => navigate(`/product/${product.id}`)}
-                    className="bg=white rounded-xl shadow-lg p-4 w-full max-w-xs cursor-pointer hover:shadow-2xl transition-shadow duration-300 flex flex-col"
-                >
-                    {images[product.id] ? (
-                        <img
-                            src={`http://127.0.0.1:8000${images[product.id]}`}
-                            alt={product.name}
-                            className="w-full h-40 object-cover rounded-lg mb-2"
-                        />
-                    ) : (
-                        <div className="w-full h-40 bg-gray-200 rounded-lg mb-2 flex items-center justify-center text-gray-400">
-                            Нет изображения
-                        </div>
-                    )}
-
-                    <div className="flex-grow">
-                        <p className="text-xl font-bold text-purple-700 mb-1">{
-                            Number.isInteger(+product.price)
-                              ? Number(product.price)
-                              : (+product.price).toFixed(2)
-                            } ₽
-                        </p>
-                        <p className="text-xl front-bold text-black mb-1">{product.name}</p>
-                        <p className="text-gray-600 mb-1">{product.description}</p>
-                    </div>
-                
-                    <button
-                        onClick={e => handleCartAdd(e, product.id)}
-                        className={`w-full font-semibold py-1 rounded transition mt-auto ${
-                            cartItems.some(item => item.product === product.id)
-                                ? 'bg-red-400 hover:bg-red-600'
-                                : 'bg-purple-400 hover:bg-purple-600'
-                        } text-white`}
-                    >
-                        {cartItems.some(item => item.product === product.id) ? (
-                            'Удалить из корзины'
-                        ) : (
-                            <>
-                                <svg className="inline w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path d="M3 3h18l-1.68 13.39A2 2 0 0117.34 18H6.66a2 2 0 01-1.98-1.61L3 3z" stroke="currentColor" strokeWidth="2" />
-                                    <circle cx="9" cy="21" r="1" />
-                                    <circle cx="15" cy="21" r="1" />
-                                </svg>
-                                В корзину
-                            </>
-                        )}
-                    </button>
+            {filteredProducts.length === 0 ? (
+                <div className="col-span-full text-center text-gray-500 mt-10 animate-fade-in">
+                    {searchParams.get('search') ? 'Товары не найдены' : 'Загрузка...'}
                 </div>
-            ))}
+            ) : (
+                filteredProducts.map((product, index) => (
+                    <div
+                        key={product.id}
+                        onClick={() => navigate(`/product/${product.id}`)}
+                        className="bg-white rounded-xl shadow-lg p-4 w-full max-w-xs cursor-pointer hover:shadow-2xl transition-all duration-300 flex flex-col animate-fade-in"
+                        style={{
+                            animationDelay: `${index * 50}ms`,
+                            opacity: 0,
+                            animation: 'fadeInUp 0.5s ease forwards'
+                        }}
+                    >
+                        {images[product.id] ? (
+                            <img
+                                src={`http://127.0.0.1:8000${images[product.id]}`}
+                                alt={product.name}
+                                className="w-full h-40 object-cover rounded-lg mb-2 transition-transform duration-300 hover:scale-105"
+                            />
+                        ) : (
+                            <div className="w-full h-40 bg-gray-200 rounded-lg mb-2 flex items-center justify-center text-gray-400">
+                                Нет изображения
+                            </div>
+                        )}
+
+                        <div className="flex-grow">
+                            <p className="text-xl font-bold text-purple-700 mb-1 transition-colors duration-300">
+                                {Number.isInteger(+product.price)
+                                    ? Number(product.price)
+                                    : (+product.price).toFixed(2)
+                                } ₽
+                            </p>
+                            <p className="text-xl font-bold text-black mb-1 transition-colors duration-300">{product.name}</p>
+                            <p className="text-gray-600 mb-1 transition-colors duration-300">{product.description}</p>
+                        </div>
+                    
+                        <button
+                            onClick={e => handleCartAdd(e, product.id)}
+                            className={`w-full font-semibold py-1 rounded transition-all duration-300 mt-auto transform hover:scale-105 ${
+                                cartItems.some(item => item.product === product.id)
+                                    ? 'bg-red-400 hover:bg-red-600'
+                                    : 'bg-purple-400 hover:bg-purple-600'
+                            } text-white`}
+                        >
+                            {cartItems.some(item => item.product === product.id) ? (
+                                'Удалить из корзины'
+                            ) : (
+                                <>
+                                    <svg className="inline w-5 h-5 mr-2 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path d="M3 3h18l-1.68 13.39A2 2 0 0117.34 18H6.66a2 2 0 01-1.98-1.61L3 3z" stroke="currentColor" strokeWidth="2" />
+                                        <circle cx="9" cy="21" r="1" />
+                                        <circle cx="15" cy="21" r="1" />
+                                    </svg>
+                                    В корзину
+                                </>
+                            )}
+                        </button>
+                    </div>
+                ))
+            )}
         </main>
+        <style jsx>{`
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .animate-fade-in {
+                animation: fadeInUp 0.5s ease forwards;
+            }
+        `}</style>
         {/* Mobile Footer */}
         <footer className="fixed bottom-0 left-0 w-full bg-purple-300 flex md:hidden justify-around items-center py-2 z-50">
                 {/* Burger */}
