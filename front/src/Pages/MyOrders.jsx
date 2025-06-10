@@ -8,6 +8,7 @@ export default function MyOrders() {
     const [images, setImages] = useState({});
     const [error, setError] = useState(null);
     const [userId, setUserId] = useState(null);
+    const [deliveryPointsMap, setDeliveryPointsMap] = useState({});
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -16,6 +17,16 @@ export default function MyOrders() {
             const payload = JSON.parse(atob(token.split('.')[1]));
             setUserId(payload.user_id);
         }
+    }, []);
+
+    useEffect(() => {
+        api.get('/api/deliverypoints/')
+            .then(res => {
+                const map = Object.fromEntries(res.data.map(p => [p.id, p.name]));
+                setDeliveryPointsMap(map);
+            })
+            .catch(() => {/* обработка */
+            });
     }, []);
 
     useEffect(() => {
@@ -57,10 +68,19 @@ export default function MyOrders() {
     if (error) return <div className="text-center text-red-500 mt-10">{error}</div>;
     return (
         <div className="min-h-screen bg-[#fdefff] text-black">
+            {/* Header как и в CartPage */}
             <header className="bg-purple-300 flex items-center px-6 py-3 rounded-xl gap-4">
                 <div className="flex items-center gap-4">
-                    <img src="/logo.jpg" alt="GosZakaz logo" className="w-14 h-14 rounded-full border-2 border-white"/>
-                    <span className="text-3xl font-bold text-white cursor-pointer" onClick={() => navigate('/Shop')}>
+                    <img
+                        src="/logo.jpg"
+                        alt="GosZakaz logo"
+                        className="w-14 h-14 rounded-full border-2 border-white"
+                        onClick={() => navigate('/Shop')}
+                    />
+                    <span
+                        className="text-3xl font-bold text-white cursor-pointer"
+                        onClick={() => navigate('/Shop')}
+                    >
           GosZakaz
         </span>
                 </div>
@@ -77,40 +97,44 @@ export default function MyOrders() {
                 </button>
             </header>
 
-            <main className="max-w-5xl mx-auto py-8">
-                <h2 className="text-2xl font-bold text-purple-700 mb-6">Мои заказы</h2>
+            <main className="max-w-5xl mx-auto py-8 space-y-4">
+                <h2 className="text-2xl font-bold text-purple-700">Мои заказы</h2>
+
                 {orders.length === 0 ? (
                     <p className="text-gray-500">У вас пока нет заказов.</p>
                 ) : (
-                    <ul className="space-y-6">
-                        {orders.map((order) => {
-                            const product = products[order.product];
-                            if (!product) return null;
+                    orders.map((order) => {
+                        const product = products[order.product];
+                        const dpName = deliveryPointsMap[order.delivery_point] ?? '—';
+                        // Предположим, что order.quantity у тебя приходит из API
+                        const qty = order.quantity ?? 1;
 
-                            return (
-                                <li key={order.id}
-                                    className="flex items-center gap-4 bg-white rounded-2xl shadow-md p-4">
-                                    {/* Фото */}
+                        return (
+                            <div
+                                key={order.id}
+                                className="bg-white rounded-2xl shadow-md p-4 flex items-center justify-between"
+                            >
+                                {/* Левый блок: фото + инфо */}
+                                <div className="flex items-center gap-4">
                                     <img
                                         src={`http://127.0.0.1:8000${images[product.id]}`}
                                         alt={product.name}
-                                        className="w-20 h-20 rounded-xl object-cover"
+                                        className="w-20 h-20 object-cover rounded-lg"
                                     />
-
-                                    {/* Инфо */}
-                                    <div className="flex-1">
+                                    <div>
                                         <p className="font-semibold">{product.name}</p>
-                                        <p className="text-sm text-gray-500">{product.description || 'Без описания'}</p>
+                                        <p className="text-sm text-gray-500">Кол-во: {qty}</p>
+                                        <p className="text-sm text-gray-500">ПВЗ: {dpName}</p>
                                     </div>
+                                </div>
 
-                                    {/* Статус */}
-                                    <div className="text-sm font-semibold text-purple-700">
-                                        Статус: <span className="capitalize">{order.status}</span>
-                                    </div>
-                                </li>
-                            );
-                        })}
-                    </ul>
+                                {/* Правый блок: статус */}
+                                <div className="text-sm font-semibold text-purple-700">
+                                    Статус: <span className="capitalize">{order.status}</span>
+                                </div>
+                            </div>
+                        );
+                    })
                 )}
             </main>
         </div>
