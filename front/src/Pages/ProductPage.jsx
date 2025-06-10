@@ -160,6 +160,7 @@ useEffect(() => {
         categories={categories}
         handleCategoryClick={handleCategoryClick}
         setSearchParams={setSearchParams}
+        navigate={navigate}
       />
 
       {/** ---------- DESKTOP ---------- **/}
@@ -215,7 +216,7 @@ useEffect(() => {
 /* --------------------------- SUB‑COMPONENTS --------------------------- */
 /* ===================================================================== */
 
-const Header = ({ isAuth, onProfile, onCart, onSearch, isBurgerOpen, setIsBurgerOpen, categories, handleCategoryClick, setSearchParams }) => (
+const Header = ({ isAuth, onProfile, onCart, onSearch, isBurgerOpen, setIsBurgerOpen, categories, handleCategoryClick, navigate }) => (
   <header className="bg-purple-300 rounded-xl flex items-center px-6 py-3 gap-4">
     <div className="flex items-center gap-4">
       <img src="/logo.jpg" alt="logo" className="w-14 h-14 rounded-full border-2 border-white" />
