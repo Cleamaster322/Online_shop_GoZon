@@ -106,7 +106,7 @@ export default function MyProducts() {
             <div
               key={product.id}
               className="bg=white rounded-xl shadow-lg p-4 w-full max-w-xs cursor-pointer hover:shadow-2xl transition-shadow duration-300"
-              onClick={() => navigate(`/edit-product/${product.id}`)}
+              onClick={() => navigate(`/product/${product.id}`)}
             >
               {images[product.id] ? (
                 <img
