@@ -4,13 +4,7 @@ import { useConfetti } from "../hooks/useConfetti";
 import api from "../shared/api.jsx";
 import Auth from "../Features/Auth.jsx";
 
-/**
- * Страница товара (desktop + mobile)
- * Стили и структура подогнаны под корзину:
- *  - превью слева, большая картинка рядом
- *  - характеристики + описание центральная колонка
- *  - цена и кнопки — правая колонка (широкая карточка как в CartPage)
- */
+
 function ProductPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -21,6 +15,9 @@ function ProductPage() {
   const [showAuth, setShowAuth] = useState(false);
   const [error, setError] = useState(null);
   const { shootAt } = useConfetti();
+
+  const [categoryName, setCategoryName] = useState("");
+  const [sellerName, setSellerName]   = useState("");
 
   /* ---------------- helpers ---------------- */
   const isAuth = () => Boolean(localStorage.getItem("accessToken"));
@@ -51,20 +48,29 @@ function ProductPage() {
   };
 
   /* ---------------- data ---------------- */
-  useEffect(() => {
-    (async () => {
-      try {
-        const prodRes = await api.get(`/api/products/${id}/`);
-        setProduct(prodRes.data);
+useEffect(() => {
+  (async () => {
+    try {
+      // 1) получаем сам товар
+      const prodRes = await api.get(`/api/products/${id}/`);
+      setProduct(prodRes.data);
 
-        const imgRes = await api.get(`/api/productimages/?product=${id}`);
-        setImages(imgRes.data);
-      } catch (e) {
-        console.error(e);
-        setError("Ошибка загрузки товара");
-      }
-    })();
-  }, [id]);
+      // 2) параллельно тянем картинки, категорию и продавца
+      const imgReq     = api.get(`/api/productimages/?product=${id}`);
+      const catReq     = api.get(`/api/categories/${prodRes.data.category}/`);
+      const sellerReq  = api.get(`/api/users/${prodRes.data.seller}/`);
+
+      const [imgRes, catRes, sellerRes] = await Promise.all([imgReq, catReq, sellerReq]);
+
+      setImages(imgRes.data);
+      setCategoryName(catRes.data.name);                    // или другое поле, какое вернёт ваш эндпоинт
+      setSellerName(sellerRes.data.username ?? sellerRes.data.full_name);
+    } catch (e) {
+      console.error(e);
+      setError("Ошибка загрузки товара");
+    }
+  })();
+}, [id]);
 
   /* ---------------- render conditions ---------------- */
   if (error) return <div className="text-center text-red-500 mt-10">{error}</div>;
@@ -90,7 +96,7 @@ function ProductPage() {
           name={product.name}
         />
 
-        <SpecsAndDescription product={product} />
+        <SpecsAndDescription product={product} categoryName={categoryName} sellerName={sellerName} />
 
         <PriceCard
           price={price}
@@ -109,6 +115,8 @@ function ProductPage() {
         onAdd={handleCartAdd}
         onProfile={handleProfileClick}
         onCart={handleCartPageClick}
+        sellerName={sellerName}
+        categoryName={categoryName}
       />
 
       {showAuth && (
@@ -204,17 +212,15 @@ const SpecRow = ({ label, value }) => (
   </div>
 );
 
-const SpecsAndDescription = ({ product }) => (
+const SpecsAndDescription = ({ product , sellerName, categoryName}) => (
   <div className="col-span-4 flex flex-col gap-6">
     <div className="bg-white rounded-3xl shadow-md p-6 border-l-4 border-purple-400 text-black space-y-2">
       <h2 className="text-xl font-bold mb-4">{product.name}</h2>
       <SpecRow label="Артикул" value={product.id} />
-      <SpecRow label="Материал изделия" value="ткань" />
-      <SpecRow label="Вид застёжки" value="без застёжки" />
-      <SpecRow label="Подкладка" value="нет" />
-      <SpecRow label="Декоративные элементы" value="без элементов" />
+      <SpecRow label="Производитель" value={sellerName || "-"} />
+      <SpecRow label="Категория товара" value={categoryName || "-"} />
+      <SpecRow label="Количество на складе" value={product.stock} />
       <SpecRow label="Страна производства" value="Россия" />
-      <SpecRow label="Комплектация" value="маска карнавальная - 1 шт." />
     </div>
 
     <div className="bg-white rounded-3xl shadow-md p-6 border-l-4 border-purple-400 text-black">
@@ -260,6 +266,8 @@ const MobileLayout = ({
   onAdd,
   onProfile,
   onCart,
+  sellerName,
+  categoryName,
 }) => {
 
   return (
@@ -285,7 +293,7 @@ const MobileLayout = ({
           {price} ₽
         </div>
 
-        <SpecsAndDescription product={product} />
+        <SpecsAndDescription product={product} categoryName={categoryName} sellerName={sellerName} />
       </div>
 
       {/* фикс-кнопка Add to Cart */}

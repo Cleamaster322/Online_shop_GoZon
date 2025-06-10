@@ -170,7 +170,7 @@ function CartPage() {
                         return (
                             <li
                                 key={item.id}
-                                className="flex flex-col sm:flex-row sm:items-center gap-4 pb-4 border-b last:border-none"
+                                className="flex flex-row items-start sm:flex-row sm:items-center gap-4 pb-4 border-b last:border-none"
                             >
                               {/* Изображение */}
                               <img
@@ -187,16 +187,10 @@ function CartPage() {
                                 <p className="text-sm text-gray-500 line-clamp-1">
                                   {product.description || 'Описание товара'}
                                 </p>
-
-                                {/*/!* Действия (mobile) *!/*/}
-                                {/*<div className="flex sm:hidden items-center gap-4 mt-3">*/}
-                                {/*  <IconButton icon={Heart}/>*/}
-                                {/*  <IconButton icon={Trash2} onClick={() => handleDelete(item.id)}/>*/}
-                                {/*</div>*/}
                               </div>
 
                               {/* Кол-во + цена */}
-                              <div className="flex items-center gap-6">
+                              <div className="mt-2 flex items-center gap-6">
                                 <div className="flex items-center gap-2 select-none">
                                   <IconButton label="Уменьшить" onClick={() => decrement(item)}>
                                     <Minus size={14}/>
@@ -272,7 +266,7 @@ function CartPage() {
               </div>
             </aside>
           </div>
-          <footer className="fixed bottom-0 left-0 w-full bg-purple-300 flex md:hidden justify-around items-center py-2 z-50">
+          <footer className="fixed bottom-0 left-0 w-full bg-purple-300 flex md:hidden justify-around items-center  mt-4 z-50">
                 <button onClick={handleProfileClick} className="flex flex-col items-center text-white hover:text-purple-900">
                     <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="2" />
