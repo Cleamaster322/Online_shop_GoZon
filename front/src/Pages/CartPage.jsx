@@ -3,6 +3,7 @@ import { Minus, Plus, Heart, Trash2 } from 'lucide-react';
 import {useNavigate} from "react-router-dom";
 import api from '../shared/api.jsx';
 
+
 function CartPage() {
   const [cartItems, setCartItems] = useState([]);
   const [products, setProducts] = useState({});
@@ -11,7 +12,6 @@ function CartPage() {
   const [error, setError] = useState(null);
   const [userId, setUserId] = useState(null);
   const navigate = useNavigate();
-
   const isEmpty = cartItems.length === 0;
 
   const handleProfileClick = () => {
@@ -89,12 +89,34 @@ function CartPage() {
           setError('Не удалось удалить товар на сервере');
         });
 
-    const increment = (item) => {
+  const increment = async (item) => {
+    const product = products[item.product];
+    if (!product) return;
+
+    if (item.quantity >= product.stock) {
+      alert("больше на складе нет товаров")
+      return;
+    }
+
+    /* 1. оптимистично увеличиваем локально */
+    setCartItems((prev) =>
+      prev.map((i) =>
+        i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+      )
+    );
+
+    /* 2. отправляем PATCH; при фейле откатываем */
+    try {
+      await patchQuantity(item.id, item.quantity + 1);
+    } catch (err) {
+      console.error(err);
       setCartItems((prev) =>
-          prev.map((i) => (i.id === item.id ? {...i, quantity: i.quantity + 1} : i)),
+        prev.map((i) =>
+          i.id === item.id ? { ...i, quantity: i.quantity } : i
+        )
       );
-      patchQuantity(item.id, item.quantity + 1);
-    };
+    }
+  };
 
     const decrement = (item) => {
       if (item.quantity === 1) return remove(item.id);
@@ -196,7 +218,7 @@ function CartPage() {
                                     <Minus size={14}/>
                                   </IconButton>
                                   <span className="px-1 text-black">{item.quantity}</span>
-                                  <IconButton label="Увеличить" onClick={() => increment(item)}>
+                                  <IconButton label="Увеличить" onClick={() => increment(item)} disabled={item.quantity >= product.stock}>
                                     <Plus size={14}/>
                                   </IconButton>
                                 </div>
@@ -280,11 +302,12 @@ function CartPage() {
   }
 
 // Компоненты-помощники
-  const IconButton = ({children, onClick, label}) => (
+  const IconButton = ({disabled,children, onClick, label}) => (
       <button
           type="button"
           aria-label={label}
           onClick={onClick}
+          disabled={disabled}
           className="w-6 h-6 flex items-center justify-center border rounded hover:bg-gray-100 transition text-black"
       >
         {children}

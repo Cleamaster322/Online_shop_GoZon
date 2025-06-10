@@ -8,7 +8,6 @@ import EditProduct from "./Pages/EditProduct.jsx";
 import CartPage from "./Pages/CartPage.jsx";
 import AuthPage from "./Pages/Auth.jsx";
 
-
 function App() {
     return (
         <>
