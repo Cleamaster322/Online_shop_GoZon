@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import api from '../shared/api.jsx';
 import {useNavigate} from "react-router-dom";
+import { useConfetti } from "../hooks/useConfetti";
 import Auth from '../Features/Auth.jsx';
 
 
@@ -10,6 +11,7 @@ function MainShop() {
     const [error, setError] = useState(null);
     const navigate = useNavigate();
     const [showAuth, setShowAuth] = useState(false);
+    const { shootAt } = useConfetti();
 
     const handleProfileClick = () => {
         if (localStorage.getItem('accessToken')) {
@@ -21,7 +23,8 @@ function MainShop() {
     const handleCartAdd = (e, productId) => {
       e.stopPropagation();                // чтобы не переходить на страницу товара
       if (localStorage.getItem('accessToken')) {
-        addToCart(productId);             // пользователь авторизован
+        addToCart(productId);
+        shootAt(e.currentTarget);// пользователь авторизован
       } else {
         setShowAuth(true);                // не авторизован → показываем модалку
       }
@@ -88,7 +91,6 @@ function MainShop() {
                 });
             }
 
-            alert('✅ Товар добавлен в корзину');
         } catch (err) {
             console.error(err);
             alert('❌ Не удалось добавить в корзину');
